@@ -1,13 +1,9 @@
-from django.contrib import auth
-from django.utils.encoding import DjangoUnicodeDecodeError
 import base64
 
-try:
-    from django.utils.encoding import smart_text
-except ImportError:
-    from django.utils.encoding import smart_unicode as smart_text
+from django.contrib import auth
+from django.utils.encoding import DjangoUnicodeDecodeError
 
-
+from .compat import smart_text
 from .views import Endpoint
 from .http import Http200, Http401, Http403
 from .models import serialize

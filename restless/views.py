@@ -1,13 +1,13 @@
-from django.views.generic import View
-from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
+import traceback
 
 from django.conf import settings
 from django.http import HttpResponse
-from .http import Http200, Http500, HttpError
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
+from django.views.generic import View
 
-import traceback
-import json
+from .compat import json
+from .http import Http200, Http500, HttpError
 
 __all__ = ['Endpoint']
 

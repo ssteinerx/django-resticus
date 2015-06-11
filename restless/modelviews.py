@@ -1,9 +1,8 @@
 from django.forms.models import modelform_factory
 
-from .views import Endpoint
 from .http import HttpError, Http200, Http201
-
 from .models import serialize
+from .views import Endpoint
 
 __all__ = ['ListEndpoint', 'DetailEndpoint', 'ActionEndpoint']
 
@@ -95,7 +94,7 @@ class ListEndpoint(Endpoint):
         if form.is_valid():
             obj = form.save()
             return Http201(self.serialize(obj))
-            
+
         raise HttpError(400, 'Invalid Data', errors=form.errors)
 
 
