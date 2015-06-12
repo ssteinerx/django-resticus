@@ -10,7 +10,7 @@ __all__ = ['ListEndpoint', 'DetailEndpoint', 'ActionEndpoint']
 def _get_form(form, model):
     from django import VERSION
 
-    if VERSION[:2] >= (1,8):
+    if VERSION[:2] >= (1, 8):
         mf = lambda m: modelform_factory(m, fields='__all__')
     else:
         mf = modelform_factory

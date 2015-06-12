@@ -1,41 +1,12 @@
 #!/usr/bin/env python
 
-from setuptools import setup, find_packages, Command
 import os
 import sys
 
-
-class BaseCommand(Command):
-    user_options = []
-
-    def initialize_options(self):
-        pass
-
-    def finalize_options(self):
-        pass
-
-
-class TestCommand(BaseCommand):
-
-    description = "run self-tests"
-
-    def run(self):
-        os.chdir('testproject')
-        ret = os.system('%s manage.py test testapp' % sys.executable)
-        if ret != 0:
-            sys.exit(-1)
-
-
-class CoverageCommand(BaseCommand):
-    description = "run self-tests and report coverage (requires coverage.py)"
-
-    def run(self):
-        os.chdir('testproject')
-        r = os.system('coverage run --source=restless manage.py test testapp')
-        if r != 0:
-            sys.exit(-1)
-        os.system('coverage html')
-
+try:
+    from setuptools import setup, find_packages
+except ImportError:
+    from distutils.core import setup, find_packages
 
 setup(
     name='DjangoRestless',
@@ -57,8 +28,4 @@ setup(
     ],
     packages=find_packages(),
     install_requires=['Django>=1.5', 'six>=1.3.0'],
-    cmdclass={
-        'test': TestCommand,
-        'coverage': CoverageCommand
-    }
 )
