@@ -1,13 +1,12 @@
 import base64
 
-from django.apps import apps
 from django.conf import settings
 from django.contrib import auth
 from django.middleware.csrf import CsrfViewMiddleware
 from django.utils.encoding import DjangoUnicodeDecodeError
 from django.utils.translation import ugettext as _
 
-from .compat import get_user_model, smart_text
+from .compat import get_model, get_user_model, smart_text
 from .exceptions import AuthenticationFailed
 from .http import HTTP_HEADER_ENCODING, Http200, Http403
 from .settings import api_settings
@@ -134,7 +133,7 @@ class TokenAuth(BaseAuth):
     def get_token_model():
         if api_settings.TOKEN_MODEL is None:
             return
-        return apps.get_model(api_settings.TOKEN_MODEL)
+        return get_model(api_settings.TOKEN_MODEL)
 
     def authenticate_credentials(self, request, key):
         try:
