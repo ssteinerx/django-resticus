@@ -1,15 +1,15 @@
-# Django Restless
+# Django Resticus
 
 [![Build Status](https://secure.travis-ci.org/dmpayton/django-resticus.png?branch=master)](http://travis-ci.org/dmpayton/django-resticus)
+[![Code Climate](https://codeclimate.com/github/dmpayton/django-resticus/badges/gpa.svg)](https://codeclimate.com/github/dmpayton/django-resticus)
 [![Coverage Status](https://coveralls.io/repos/dmpayton/django-resticus/badge.png)](https://coveralls.io/r/dmpayton/django-resticus)
-[![PyPi version](https://pypip.in/v/django-resticus/badge.png)](https://crate.io/packages/django-resticus/)
 
 Resticus is a lightweight set of tools for implementing JSON-based
 RESTful APIs in Django. It helps with writing APIs that loosely follow
 the RESTful paradigm, without forcing you to do so, and without imposing a
 full-blown REST framework.
 
-Restless provides only JSON support. If you need to support XML or
+Resticus provides only JSON support. If you need to support XML or
 other formats, you probably want to take a look at some of the other frameworks
 out there (we recommend Django REST framework).
 
@@ -22,14 +22,14 @@ Here is a simple view implementing an API endpoint greeting the caller:
             name = request.params.get('name', 'World')
             return {'message': 'Hello, %s!' % name}
 
-One of the main ideas behind Restless is that it's lightweight and reuses
+One of the main ideas behind Resticus is that it's lightweight and reuses
 as much of functionality in Django as possible. For example, input parsing and
 validation is done using standard Django forms. This means you don't have to
-learn a whole new API to use Restless.
+learn a whole new API to use Resticus.
 
 ## Installation
 
-Django Restless is available from cheeseshop, so you can install it via pip:
+Django Resticus is available from cheeseshop, so you can install it via pip:
 
     pip install django-resticus
 
