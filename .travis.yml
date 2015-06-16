@@ -1,20 +1,27 @@
 language: python
-python:
-  - 2.6
-  - 2.7
-  - 3.3
-  - 3.4
+
 env:
-  - DJANGO=1.5.12
-  - DJANGO=1.6.11
-  - DJANGO=1.7.7
-  - DJANGO=1.8
-matrix:
-  exclude:
-   - python: 2.6
-     env: DJANGO=1.7.7
-   - python: 2.6
-     env: DJANGO=1.8
-install: pip install -q Django==$DJANGO six coveralls
-script: python setup.py coverage
-after_success: cd testproject && coveralls
+  - TOXENV=django15_py26
+  - TOXENV=django15_py27
+  - TOXENV=django15_py33
+  - TOXENV=django15_py34
+
+  - TOXENV=django16_py26
+  - TOXENV=django16_py27
+  - TOXENV=django16_py33
+  - TOXENV=django16_py34
+
+  - TOXENV=django17_py27
+  - TOXENV=django17_py33
+  - TOXENV=django17_py34
+
+  - TOXENV=django18_py27
+  - TOXENV=django18_py33
+  - TOXENV=django18_py34
+
+  - TOXENV=coverage
+
+install:
+  - pip install tox
+
+script: tox
