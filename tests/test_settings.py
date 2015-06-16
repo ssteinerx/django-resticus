@@ -1,5 +1,5 @@
 from django.test import TestCase
-from restless.settings import APISettings
+from resticus.settings import APISettings
 
 
 class TestSettings(TestCase):

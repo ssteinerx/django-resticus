@@ -105,7 +105,7 @@ class BasicHttpAuth(BaseAuth):
 
 def login_required(fn):
     """
-    Decorator for :py:class:`restless.views.Endpoint` methods to require
+    Decorator for :py:class:`resticus.views.Endpoint` methods to require
     authenticated user. If the user isn't authenticated, HTTP 403 is
     returned immediately (HTTP 401 if Basic HTTP authentication is used).
     """

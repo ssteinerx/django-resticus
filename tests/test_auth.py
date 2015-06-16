@@ -1,6 +1,6 @@
 import base64
 from django.test import TestCase
-from restless.compat import json, get_user_model
+from resticus.compat import json, get_user_model
 from .client import TestClient
 from .testapp.models import Publisher, Author, Book
 

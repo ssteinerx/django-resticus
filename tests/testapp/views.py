@@ -1,11 +1,11 @@
 import base64
 
-from restless.auth import login_required, BasicHttpAuth
-from restless.exceptions import HttpError
-from restless.http import Http201, Http403, Http404, Http400
-from restless.models import serialize
-from restless.modelviews import ListEndpoint, DetailEndpoint, ActionEndpoint
-from restless.views import Endpoint
+from resticus.auth import login_required, BasicHttpAuth
+from resticus.exceptions import HttpError
+from resticus.http import Http201, Http403, Http404, Http400
+from resticus.models import serialize
+from resticus.modelviews import ListEndpoint, DetailEndpoint, ActionEndpoint
+from resticus.views import Endpoint
 
 from .models import *
 from .forms import *

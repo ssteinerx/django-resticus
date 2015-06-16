@@ -41,14 +41,14 @@ class Endpoint(View):
     The view method should return either a HTTPResponse (for example, a
     redirect), or something else (usually a dictionary or a list). If something
     other than HTTPResponse is returned, it is first serialized into
-    :py:class:`restless.http.JSONResponse` with a status code 200 (OK),
+    :py:class:`resticus.http.JSONResponse` with a status code 200 (OK),
     then returned.
 
     The authenticate method should return either a HttpResponse, which will
     shortcut the rest of the request handling (the view method will not be
     called), or None (the request will be processed normally).
 
-    Both methods can raise a :py:class:`restless.http.HttpError` exception
+    Both methods can raise a :py:class:`resticus.http.HttpError` exception
     instead of returning a HttpResponse, to shortcut the request handling and
     immediately return the error to the client.
     """

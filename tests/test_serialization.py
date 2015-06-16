@@ -1,7 +1,7 @@
 import warnings
 from decimal import Decimal
 from django.test import TestCase
-from restless.models import serialize, flatten
+from resticus.models import serialize, flatten
 from .testapp.models import Publisher, Author, Book
 
 

@@ -26,7 +26,7 @@ def _get_form(form, model):
 
 class ListEndpoint(Endpoint):
     """
-    List :py:class:`restless.views.Endpoint` supporting getting a list of
+    List :py:class:`resticus.views.Endpoint` supporting getting a list of
     objects and creating a new one. The endpoint exports two view methods by
     default: get (for getting the list of objects) and post (for creating a
     new object).
@@ -55,7 +55,7 @@ class ListEndpoint(Endpoint):
         behaviour. The `args` and `kwargs` parameters are passed in directly
         from the URL pattern match.
 
-        If the method raises a :py:class:`restless.http.HttpError` exception,
+        If the method raises a :py:class:`resticus.http.HttpError` exception,
         the rest of the request processing is terminated and the error is
         immediately returned to the client.
         """
@@ -68,7 +68,7 @@ class ListEndpoint(Endpoint):
     def serialize(self, objs):
         """Serialize the objects in the response.
 
-        By default, the method uses the :py:func:`restless.models.serialize`
+        By default, the method uses the :py:func:`resticus.models.serialize`
         function to serialize the objects with default behaviour. Override the
         method to customize the serialization.
         """
@@ -101,7 +101,7 @@ class ListEndpoint(Endpoint):
 
 class DetailEndpoint(Endpoint):
     """
-    Detail :py:class:`restless.views.Endpoint` supports getting a single
+    Detail :py:class:`resticus.views.Endpoint` supports getting a single
     object from the database (HTTP GET), updating it (HTTP PUT) and deleting
     it (HTTP DELETE).
 
@@ -136,7 +136,7 @@ class DetailEndpoint(Endpoint):
         and `kwargs` parameters are passed in directly from the URL pattern
         match.
 
-        If the method raises a :py:class:`restless.http.HttpError` exception,
+        If the method raises a :py:class:`resticus.http.HttpError` exception,
         the rest of the request processing is terminated and the error is
         immediately returned to the client.
         """
@@ -154,7 +154,7 @@ class DetailEndpoint(Endpoint):
     def serialize(self, obj):
         """Serialize the object in the response.
 
-        By default, the method uses the :py:func:`restless.models.serialize`
+        By default, the method uses the :py:func:`resticus.models.serialize`
         function to serialize the object with default behaviour. Override the
         method to customize the serialization.
         """

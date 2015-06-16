@@ -1,10 +1,10 @@
 # Django Restless
 
-[![Build Status](https://secure.travis-ci.org/dobarkod/django-restless.png?branch=master)](http://travis-ci.org/dobarkod/django-restless)
-[![Coverage Status](https://coveralls.io/repos/dobarkod/django-restless/badge.png)](https://coveralls.io/r/dobarkod/django-restless)
-[![PyPi version](https://pypip.in/v/DjangoRestless/badge.png)](https://crate.io/packages/DjangoRestless/)
+[![Build Status](https://secure.travis-ci.org/dmpayton/django-resticus.png?branch=master)](http://travis-ci.org/dmpayton/django-resticus)
+[![Coverage Status](https://coveralls.io/repos/dmpayton/django-resticus/badge.png)](https://coveralls.io/r/dmpayton/django-resticus)
+[![PyPi version](https://pypip.in/v/django-resticus/badge.png)](https://crate.io/packages/django-resticus/)
 
-Django Restless is a lightweight set of tools for implementing JSON-based
+Resticus is a lightweight set of tools for implementing JSON-based
 RESTful APIs in Django. It helps with writing APIs that loosely follow
 the RESTful paradigm, without forcing you to do so, and without imposing a
 full-blown REST framework.
@@ -31,22 +31,22 @@ learn a whole new API to use Restless.
 
 Django Restless is available from cheeseshop, so you can install it via pip:
 
-    pip install DjangoRestless
+    pip install django-resticus
 
 For the latest and the greatest, you can also get it directly from git master:
 
-    pip install -e git+ssh://github.com/senko/DjangoRestless/tree/master
+    pip install git+ssh://github.com/dmpayton/django-resticus/tree/master
 
 The supported Python versions are 2.6, 2.7, 3.3 and 3.4, and the supported
 Django versions are 1.5+.
 
 ## Documentation
 
-Documentation is graciously hosted by ReadTheDocs: http://django-restless.rtfd.org/
+Documentation is graciously hosted by ReadTheDocs: http://django-resticus.rtfd.org/
 
 ## License
 
-Copyright (C) 2012-2015 by Django Restless contributors. See the
+Copyright (C) 2012-2015 by Django Resticus contributors. See the
 [AUTHORS](AUTHORS.md) file for the list of contributors.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:

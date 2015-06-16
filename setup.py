@@ -9,13 +9,13 @@ except ImportError:
     from distutils.core import setup, find_packages
 
 setup(
-    name='DjangoRestless',
+    name='django-resticus',
     version='0.0.10',
-    author='Senko Rasic',
-    author_email='senko.rasic@goodcode.io',
+    author='Derek Payton',
+    author_email='derek.payton@gmail.com',
     description='A RESTful framework for Django',
     license='MIT',
-    url='https://github.com/dobarkod/django-restless',
+    url='https://github.com/dmpayton/django-resticus',
     classifiers=[
         "Development Status :: 4 - Beta",
         "Environment :: Web Environment",

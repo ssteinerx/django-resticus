@@ -1,5 +1,5 @@
 from django.conf.urls import patterns, url
-from restless.views import SessionAuthEndpoint
+from resticus.views import SessionAuthEndpoint
 
 from .views import *
 

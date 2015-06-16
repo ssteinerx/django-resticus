@@ -8,8 +8,8 @@ USER_SETTINGS = getattr(settings, 'RESTICUS', None)
 
 DEFAULTS = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'restless.auth.SessionAuth',
-        'restless.auth.BasicHttpAuth',
+        'resticus.auth.SessionAuth',
+        'resticus.auth.BasicHttpAuth',
     ),
     'LOGIN_REQUIRED': False,
 }
