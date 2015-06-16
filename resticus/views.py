@@ -12,8 +12,8 @@ from .auth import SessionAuth, login_required
 from .compat import get_user_model, json
 from .exceptions import APIException, AuthenticationFailed, ParseError
 from .http import Http200, Http500
-from .models import serialize
 from .settings import api_settings
+from .utils import serialize
 
 __all__ = ['Endpoint']
 

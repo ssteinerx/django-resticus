@@ -3,8 +3,8 @@ import base64
 from resticus.auth import login_required, BasicHttpAuth
 from resticus.exceptions import HttpError
 from resticus.http import Http201, Http403, Http404, Http400
-from resticus.models import serialize
 from resticus.modelviews import ListEndpoint, DetailEndpoint, ActionEndpoint
+from resticus.utils import serialize
 from resticus.views import Endpoint
 
 from .models import *

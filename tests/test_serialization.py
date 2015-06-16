@@ -1,7 +1,7 @@
 import warnings
 from decimal import Decimal
 from django.test import TestCase
-from resticus.models import serialize, flatten
+from resticus.utils import serialize, flatten
 from .testapp.models import Publisher, Author, Book
 
 
@@ -38,17 +38,6 @@ class TestSerialization(TestCase):
         s = serialize(self.books[0])
         self.assertEqual(s['author'], self.author.id)
 
-    def test_serialize_related_deprecated(self):
-        """Test serialization of related model"""
-
-        with warnings.catch_warnings(record=True):
-            s = serialize(self.author, related={'books': None})
-        self.assertEqual(s['name'], 'User Foo')
-        self.assertEqual(len(s['books']), len(self.books))
-        for b in s['books']:
-            self.assertTrue(b['title'].startswith('Book '))
-            self.assertTrue(b['isbn'].startswith('123-1-12-123456-'))
-
     def test_serialize_related(self):
         """Test serialization of related model"""
 
@@ -58,19 +47,6 @@ class TestSerialization(TestCase):
         for b in s['books']:
             self.assertTrue(b['title'].startswith('Book '))
             self.assertTrue(b['isbn'].startswith('123-1-12-123456-'))
-
-    def test_serialize_related_partial_deprecated(self):
-        """Test serialization of some fields of related model"""
-
-        with warnings.catch_warnings(record=True):
-            s = serialize(self.author, related={
-                'books': ('title', None, False)
-            })
-        self.assertEqual(s['name'], 'User Foo')
-        self.assertEqual(len(s['books']), len(self.books))
-        for b in s['books']:
-            self.assertTrue(b['title'].startswith('Book '))
-            self.assertTrue('isbn' not in b)
 
     def test_serialize_related_partial(self):
         """Test serialization of some fields of related model"""
@@ -86,22 +62,6 @@ class TestSerialization(TestCase):
             self.assertTrue(b['title'].startswith('Book '))
             self.assertTrue('isbn' not in b)
 
-    def test_serialize_related_deep_deprecated(self):
-        """Test serialization of twice-removed related model"""
-
-        with warnings.catch_warnings(record=True):
-            s = serialize(self.author, related={
-                'books': (None, {
-                    'publisher': None,
-                }, None)
-            })
-
-        self.assertEqual(s['name'], 'User Foo')
-        self.assertEqual(len(s['books']), len(self.books))
-        for b in s['books']:
-            self.assertTrue(b['title'].startswith('Book '))
-            self.assertEqual(b['publisher']['name'], 'Publisher')
-
     def test_serialize_related_deep(self):
         """Test serialization of twice-removed related model"""
 
@@ -116,15 +76,6 @@ class TestSerialization(TestCase):
         for b in s['books']:
             self.assertTrue(b['title'].startswith('Book '))
             self.assertEqual(b['publisher']['name'], 'Publisher')
-
-    def test_serialize_related_flatten_deprecated(self):
-        """Test injection of related models' fields into the serialized one"""
-
-        b = self.books[0]
-        s = serialize(b, related={
-            'author': (None, None, True)
-        })
-        self.assertEqual(s['name'], b.author.name)
 
     def test_serialize_related_flatten(self):
         """Test injection of related models' fields into the serialized one"""
