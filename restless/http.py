@@ -14,37 +14,31 @@ HTTP_HEADER_ENCODING = 'iso-8859-1'
 
 
 class JSONResponse(http.HttpResponse):
-    """HTTP response with JSON body ("application/json" content type)"""
+    """An HTTP response class that consumes data to be serialized to JSON."""
 
-    def __init__(self, data, **kwargs):
-        """
-        Create a new JSONResponse with the provided data (will be serialized
-        to JSON using django.core.serializers.json.DjangoJSONEncoder).
-        """
-
-        kwargs['content_type'] = 'application/json; charset=utf-8'
-        super(JSONResponse, self).__init__(json.dumps(data,
-            cls=DjangoJSONEncoder), **kwargs)
+    def __init__(self, data, encoder=DjangoJSONEncoder, **kwargs):
+        kwargs.setdefault('content_type', 'application/json')
+        data = json.dumps(data, cls=encoder)
+        super(JSONResponse, self).__init__(content=data, **kwargs)
 
 
 class JSONErrorResponse(JSONResponse):
-    """HTTP Error response with JSON body ("application/json" content type)"""
+    """A JSON response class for API errors."""
 
     status_code = 500
 
     def __init__(self, reason, **kwargs):
-        """
-        Create a new JSONErrorResponse with the provided error reason (string)
-        and the optional additional data (will be added to the resulting
-        JSON object).
-        """
-        data = {'errors': [{'detail': reason}]}
+        data = {'errors': [{
+            'detail': reason,
+            'meta': {}
+        }]}
+
         if settings.DEBUG:
             exc = sys.exc_info()
             if exc[0] is not None:
-                data['errors'][0]['meta'] = {
-                    'traceback': ''.join(traceback.format_exception(*exc))
-                }
+                data['errors'][0]['meta'].update(
+                    traceback=''.join(traceback.format_exception(*exc))
+                )
         super(JSONErrorResponse, self).__init__(data, **kwargs)
 
 

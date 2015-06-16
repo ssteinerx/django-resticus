@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib import auth
 from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
@@ -7,8 +8,8 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 
-from .auth import UsernamePasswordAuthMixin, login_required
-from .compat import json
+from .auth import SessionAuth, login_required
+from .compat import get_user_model, json
 from .exceptions import APIException, AuthenticationFailed, ParseError
 from .http import Http200, Http500
 from .models import serialize
@@ -53,6 +54,7 @@ class Endpoint(View):
     """
 
     authentication_classes = api_settings.DEFAULT_AUTHENTICATION_CLASSES
+    login_required = api_settings.LOGIN_REQUIRED
 
     @staticmethod
     def parse_content_type(content_type):
@@ -117,6 +119,7 @@ class Endpoint(View):
             request.user = self.authenticate(request)
             request.data = self.parse_body(request)
             response = super(Endpoint, self).dispatch(request, *args, **kwargs)
+
         except AuthenticationFailed as err:
             # WWW-Authenticate header for 401 responses, else coerce to 403
             auth_header = self.get_authenticate_header(self.request)
@@ -124,9 +127,11 @@ class Endpoint(View):
                 err.response['WWW-Authenticate'] = auth_header
             else:
                 err.response.status_code = 403
-            raise
+            response = err.response
+
         except APIException as err:
             response = err.response
+
         except Exception as err:
             if settings.DEBUG:
                 response = Http500(str(err))
@@ -138,7 +143,7 @@ class Endpoint(View):
         return response
 
 
-class AuthenticateEndpoint(Endpoint, UsernamePasswordAuthMixin):
+class SessionAuthEndpoint(Endpoint):
     """
     Session-based authentication API endpoint. Provides a GET method for
     authenticating the user based on passed-in "username" and "password"
@@ -152,8 +157,33 @@ class AuthenticateEndpoint(Endpoint, UsernamePasswordAuthMixin):
     object, containing id, username, first_name, last_name and email fields.
     """
 
+    authentication_classes = (SessionAuth,)
+
     user_fields = ('id', 'username', 'first_name', 'last_name', 'email')
 
     @login_required
     def get(self, request):
-        return Http200(serialize(request.user, fields=self.user_fields))
+        return Http200({
+            'data': serialize(request.user, fields=self.user_fields)
+        })
+
+    def post(self, request):
+        username_field = getattr(get_user_model(), 'USERNAME_FIELD', 'username')
+
+        username = request.data.get(username_field)
+        password = request.data.get('password')
+
+        credentials = {
+            username_field: username,
+            'password': password
+        }
+        user = auth.authenticate(**credentials)
+
+        if user is None:
+            raise AuthenticationFailed(_('Invalid username/password.'))
+
+        if not user.is_active:
+            raise AuthenticationFailed(_('User inactive or deleted.'))
+
+        auth.login(request, user)
+        return self.get(request)

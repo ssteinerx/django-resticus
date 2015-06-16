@@ -1,6 +1,11 @@
 from django.core.urlresolvers import reverse
 from django.test.client import Client, MULTIPART_CONTENT
+from django.test.utils import override_settings
 from restless.compat import json
+
+
+def debug(fn):
+    return override_settings(DEBUG=True)(fn)
 
 
 class TestClient(Client):

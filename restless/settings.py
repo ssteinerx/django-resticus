@@ -11,6 +11,7 @@ DEFAULTS = {
         'restless.auth.SessionAuth',
         'restless.auth.BasicHttpAuth',
     ),
+    'LOGIN_REQUIRED': False,
 }
 
 IMPORT_STRINGS = (
@@ -89,6 +90,5 @@ def reload_api_settings(*args, **kwargs):
     setting, value = kwargs['setting'], kwargs['value']
     if setting == 'RESTICUS':
         api_settings = APISettings(value, DEFAULTS, IMPORT_STRINGS)
-
 
 setting_changed.connect(reload_api_settings)

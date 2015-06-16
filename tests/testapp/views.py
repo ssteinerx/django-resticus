@@ -1,19 +1,19 @@
 import base64
 
-from restless.auth import (BasicHttpAuthMixin, login_required)
+from restless.auth import login_required, BasicHttpAuth
 from restless.exceptions import HttpError
 from restless.http import Http201, Http403, Http404, Http400
 from restless.models import serialize
 from restless.modelviews import ListEndpoint, DetailEndpoint, ActionEndpoint
-from restless.views import AuthenticateEndpoint, Endpoint
+from restless.views import Endpoint
 
 from .models import *
 from .forms import *
 
-__all__ = ['AuthorList', 'AuthorDetail', 'FailsIntentionally',
-    'WildcardHandler', 'EchoView', 'ErrorRaisingView', 'PublisherAutoList',
-    'PublisherAutoDetail', 'ReadOnlyPublisherAutoList', 'PublisherAction',
-    'BookDetail']
+__all__ = ['AuthorList', 'AuthorDetail', 'PublisherList', 'PublisherDetail',
+    'ReadOnlyPublisherList', 'PublisherAction', 'BookDetail',
+    'FailsIntentionally', 'WildcardHandler', 'EchoView', 'ErrorRaisingView',
+    'BasicAuthEndpoint']
 
 
 class AuthorList(Endpoint):
@@ -59,6 +59,31 @@ class AuthorDetail(Endpoint):
                 details=form.errors)
 
 
+class PublisherList(ListEndpoint):
+    model = Publisher
+
+
+class PublisherDetail(DetailEndpoint):
+    model = Publisher
+
+
+class ReadOnlyPublisherList(ListEndpoint):
+    model = Publisher
+    methods = ['GET']
+
+
+class PublisherAction(ActionEndpoint):
+    model = Publisher
+
+    def action(self, obj, *args, **kwargs):
+        return {'result': 'done'}
+
+
+class BookDetail(DetailEndpoint):
+    model = Book
+    lookup_field = 'isbn'
+
+
 class FailsIntentionally(Endpoint):
     def get(self, request):
         raise Exception("I'm being a bad view")
@@ -89,26 +114,9 @@ class ErrorRaisingView(Endpoint):
         raise HttpError(400, 'raised error')
 
 
-class PublisherAutoList(ListEndpoint):
-    model = Publisher
+class BasicAuthEndpoint(Endpoint):
+    authentication_classes = (BasicHttpAuth,)
 
-
-class PublisherAutoDetail(DetailEndpoint):
-    model = Publisher
-
-
-class ReadOnlyPublisherAutoList(ListEndpoint):
-    model = Publisher
-    methods = ['GET']
-
-
-class PublisherAction(ActionEndpoint):
-    model = Publisher
-
-    def action(self, obj, *args, **kwargs):
-        return {'result': 'done'}
-
-
-class BookDetail(DetailEndpoint):
-    model = Book
-    lookup_field = 'isbn'
+    @login_required
+    def get(self, request):
+        return serialize(request.user)

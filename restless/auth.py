@@ -3,15 +3,15 @@ import base64
 from django.contrib import auth
 from django.middleware.csrf import CsrfViewMiddleware
 from django.utils.encoding import DjangoUnicodeDecodeError
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 
 from .exceptions import AuthenticationFailed
-from .compat import smart_text
-from .http import Http200, Http403
+from .compat import get_user_model, smart_text
+from .http import HTTP_HEADER_ENCODING, Http200, Http403
 
 
-__all__ = ['UsernamePasswordAuthMixin', 'BasicHttpAuthMixin',
-    'AuthenticateEndpoint', 'login_required']
+__all__ = ['SessionAuth', 'BasicHttpAuth', 'SessionAuthEndpoint',
+    'login_required']
 
 
 def get_authorization_header(request):
@@ -65,25 +65,25 @@ class BasicHttpAuth(BaseAuth):
     def authenticate(self, request):
         authdata = get_authorization_header(request).split()
 
-        if not auth or auth[0].lower() != b'basic':
+        if not authdata or authdata[0].lower() != b'basic':
             return None
 
-        if len(auth) == 1:
+        if len(authdata) == 1:
             msg = _('Invalid basic header. No credentials provided.')
             raise AuthenticationFailed(msg)
-        elif len(auth) > 2:
+        elif len(authdata) > 2:
             msg = _('Invalid basic header. Credentials string should not contain spaces.')
             raise AuthenticationFailed(msg)
 
         try:
-            auth_parts = base64.b64decode(auth[1]).decode(http.HTTP_HEADER_ENCODING).partition(':')
-        except (TypeError, UnicodeDecodeError):
+            auth_parts = base64.b64decode(authdata[1]).decode(HTTP_HEADER_ENCODING).partition(':')
+        except Exception:
             msg = _('Invalid basic header. Credentials not correctly base64 encoded.')
             raise AuthenticationFailed(msg)
 
         userid, password = auth_parts[0], auth_parts[2]
 
-        username_field = getattr(auth.get_user_model(), 'USERNAME_FIELD', 'username')
+        username_field = getattr(get_user_model(), 'USERNAME_FIELD', 'username')
         credentials = {
             username_field: userid,
             'password': password
@@ -103,45 +103,15 @@ class BasicHttpAuth(BaseAuth):
         return 'Basic realm="{0}"'.format(self.www_authenticate_realm)
 
 
-class UsernamePasswordAuthMixin(object):
-    """
-    :py:class:`restless.views.Endpoint` mixin providing user authentication
-    based on username and password (as specified in "username" and "password"
-    request GET params).
-    """
-
-    def authenticate(self, request):
-        if request.method == 'POST':
-            self.username = request.data.get('username')
-            self.password = request.data.get('password')
-        else:
-            self.username = request.params.get('username')
-            self.password = request.params.get('password')
-
-        user = auth.authenticate(username=self.username,
-            password=self.password)
-        if user is not None and user.is_active:
-            auth.login(request, user)
-
-
-# Taken from Django Rest Framework
-class BasicHttpAuthMixin(object):
-    """
-    :py:class:`restless.views.Endpoint` mixin providing user authentication
-    based on HTTP Basic authentication.
-    """
-
-    authentication_classes = (BasicHttpAuth,)
-
-
 def login_required(fn):
     """
     Decorator for :py:class:`restless.views.Endpoint` methods to require
-    authenticated, active user. If the user isn't authenticated, HTTP 403 is
+    authenticated user. If the user isn't authenticated, HTTP 403 is
     returned immediately (HTTP 401 if Basic HTTP authentication is used).
     """
     def wrapper(self, request, *args, **kwargs):
-        if request.user is None or not request.user.is_active:
+        user = getattr(request, 'user', None)
+        if user is None or not user.is_authenticated() or not user.is_active:
             msg = _('You must be logged in to access this endpoint.')
             raise AuthenticationFailed(msg)
         return fn(self, request, *args, **kwargs)
