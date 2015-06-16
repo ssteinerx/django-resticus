@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.test.client import Client, MULTIPART_CONTENT
 from django.test.utils import override_settings
@@ -15,6 +16,8 @@ class TestClient(Client):
             response.json = json.loads(response.content.decode('utf-8'))
         except Exception:
             response.json = None
+        if settings.DEBUG:
+            print(response.json)
         return response
 
     def get(self, url_name, data={}, follow=False, extra={}, *args, **kwargs):

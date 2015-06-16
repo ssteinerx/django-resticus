@@ -12,6 +12,7 @@ DEFAULTS = {
         'resticus.auth.BasicHttpAuth',
     ),
     'LOGIN_REQUIRED': False,
+    'TOKEN_MODEL': None,
 }
 
 IMPORT_STRINGS = (

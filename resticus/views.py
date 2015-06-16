@@ -8,7 +8,7 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 
-from .auth import SessionAuth, login_required
+from .auth import SessionAuth, TokenAuth, login_required
 from .compat import get_user_model, json
 from .exceptions import APIException, AuthenticationFailed, ParseError
 from .http import Http200, Http500
@@ -177,13 +177,50 @@ class SessionAuthEndpoint(Endpoint):
             username_field: username,
             'password': password
         }
-        user = auth.authenticate(**credentials)
+        request.user = auth.authenticate(**credentials)
 
-        if user is None:
+        if request.user is None:
             raise AuthenticationFailed(_('Invalid username/password.'))
 
-        if not user.is_active:
+        if not request.user.is_active:
             raise AuthenticationFailed(_('User inactive or deleted.'))
 
-        auth.login(request, user)
+        auth.login(request, request.user)
+        return self.get(request)
+
+
+class TokenAuthEndpoint(Endpoint):
+    authentication_classes = (TokenAuth,)
+
+    user_fields = ('id', 'username', 'first_name', 'last_name', 'email')
+
+    @login_required
+    def get(self, request):
+        data = serialize(request.user, fields=self.user_fields)
+        data['api_token'] = request.user.api_token.key
+        return Http200({'data': data})
+
+    def post(self, request):
+        username_field = getattr(get_user_model(), 'USERNAME_FIELD', 'username')
+
+        username = request.data.get(username_field)
+        password = request.data.get('password')
+
+        credentials = {
+            username_field: username,
+            'password': password
+        }
+        request.user = auth.authenticate(**credentials)
+
+        if request.user is None:
+            raise AuthenticationFailed(_('Invalid username/password.'))
+
+        if not request.user.is_active:
+            raise AuthenticationFailed(_('User inactive or deleted.'))
+
+        TokenModel = TokenAuth.get_token_model()
+        token = TokenModel.objects.filter(user=request.user)
+        if not token.exists():
+            TokenModel.objects.create(user=request.user)
+
         return self.get(request)

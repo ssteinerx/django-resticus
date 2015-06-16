@@ -1,7 +1,8 @@
 import base64
 from django.test import TestCase
+from resticus.auth import TokenAuth
 from resticus.compat import json, get_user_model
-from .client import TestClient
+from .client import TestClient, debug
 from .testapp.models import Publisher, Author, Book
 
 
@@ -12,8 +13,9 @@ class TestAuth(TestCase):
             username='foo',
             password='bar'
         )
+        self.token = TokenAuth.get_token_model().objects.create(user=self.user)
 
-    def test_login_success(self):
+    def test_session_login_success(self):
         """Test that correct username/password login succeeds"""
         r = self.client.post('session_auth', data={
             'username': 'foo', 'password': 'bar',
@@ -21,7 +23,7 @@ class TestAuth(TestCase):
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.json['data']['username'], 'foo')
 
-    def test_login_failure(self):
+    def test_session_login_failure(self):
         """Test that incorrect username/password login fails"""
         r = self.client.post('session_auth', data={
             'username': 'nonexistent', 'password': 'pwd',
@@ -66,5 +68,41 @@ class TestAuth(TestCase):
         """Test that invalid Basic Auth payload doesn't crash the pasrser"""
         r = self.client.get('basic_auth', extra={
             'HTTP_AUTHORIZATION': 'Basic xyz',
+        })
+        self.assertEqual(r.status_code, 401)
+
+    def test_token_auth_challenge(self):
+        """Test that Token Auth challenge is issued"""
+        r = self.client.get('token_auth')
+        self.assertEqual(r.status_code, 401)
+        self.assertEqual(r['WWW-Authenticate'], 'Token')
+
+    def test_token_login_success(self):
+        """Test that correct username/password login succeeds"""
+        r = self.client.post('token_auth', data={
+            'username': 'foo', 'password': 'bar',
+        })
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json['data']['api_token'], self.token.key)
+
+    def test_token_login_failure(self):
+        """Test that incorrect username/password login fails"""
+        r = self.client.post('token_auth', data={
+            'username': 'nonexistent', 'password': 'pwd',
+        })
+        self.assertEqual(r.status_code, 401)
+
+    def test_token_auth_success(self):
+        """Test that the Session Auth succeeds"""
+        self.client.login(username='foo', password='bar')
+        r = self.client.get('token_auth', extra={
+            'HTTP_AUTHORIZATION': 'Token {0}'.format(self.token.key)
+        })
+        self.assertEqual(r.status_code, 200)
+
+    def test_token_auth_failure(self):
+        """Test that the Session Auth fails"""
+        r = self.client.get('token_auth', extra={
+            'HTTP_AUTHORIZATION': 'Token faketoken'
         })
         self.assertEqual(r.status_code, 401)

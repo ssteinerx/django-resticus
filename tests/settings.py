@@ -37,6 +37,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'resticus',
     'tests.testapp',
 )
 
@@ -86,4 +87,6 @@ STATIC_URL = '/static/'
 # Resticus settings
 RESTICUS = {
     'DEFAULT_AUTHENTICATION_CLASSES': (),
+    'LOGIN_REQUIRED': False,
+    'TOKEN_MODEL': 'resticus.Token'
 }

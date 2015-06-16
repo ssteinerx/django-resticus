@@ -1,3 +1,4 @@
+from django.conf import settings
 
 try:
     import importlib
@@ -25,3 +26,5 @@ try:
 except ImportError:
     from django.contrib.auth.models import User
     get_user_model = lambda: User
+
+AUTH_USER_MODEL = getattr(settings, 'AUTH_USER_MODEL', 'auth.User')

@@ -1,14 +1,15 @@
 from django.conf.urls import patterns, url
-from resticus.views import SessionAuthEndpoint
+from resticus.views import SessionAuthEndpoint, TokenAuthEndpoint
 
 from .views import *
 
 urlpatterns = patterns('',
     url(r'^auth/$', SessionAuthEndpoint.as_view(),
         name='session_auth'),
-
     url(r'^auth/basic/$', BasicAuthEndpoint.as_view(),
         name='basic_auth'),
+    url(r'^auth/token/$', TokenAuthEndpoint.as_view(),
+        name='token_auth'),
 
     url(r'^authors/$', AuthorList.as_view(),
         name='author_list'),
