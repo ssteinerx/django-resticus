@@ -1,11 +1,16 @@
+import sys
+import traceback
+
 from django import http
+from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
 
 from .compat import json
 
+__all__ = ['JSONResponse', 'JSONErrorResponse', 'Http200', 'Http201',
+    'Http400', 'Http403']
 
-__all__ = ['JSONResponse', 'JSONErrorResponse', 'HttpError',
-    'Http200', 'Http201', 'Http400', 'Http401', 'Http403']
+HTTP_HEADER_ENCODING = 'iso-8859-1'
 
 
 class JSONResponse(http.HttpResponse):
@@ -25,15 +30,22 @@ class JSONResponse(http.HttpResponse):
 class JSONErrorResponse(JSONResponse):
     """HTTP Error response with JSON body ("application/json" content type)"""
 
-    def __init__(self, reason, **additional_data):
+    status_code = 500
+
+    def __init__(self, reason, **kwargs):
         """
         Create a new JSONErrorResponse with the provided error reason (string)
         and the optional additional data (will be added to the resulting
         JSON object).
         """
-        resp = {'error': reason}
-        resp.update(additional_data)
-        super(JSONErrorResponse, self).__init__(resp)
+        data = {'errors': [{'detail': reason}]}
+        if settings.DEBUG:
+            exc = sys.exc_info()
+            if exc[0] is not None:
+                data['errors'][0]['meta'] = {
+                    'traceback': ''.join(traceback.format_exception(*exc))
+                }
+        super(JSONErrorResponse, self).__init__(data, **kwargs)
 
 
 class Http200(JSONResponse):
@@ -51,21 +63,8 @@ class Http400(JSONErrorResponse, http.HttpResponseBadRequest):
     pass
 
 
-class Http401(http.HttpResponse):
-    """HTTP 401 UNAUTHENTICATED"""
-    status_code = 401
-
-    def __init__(self, typ='basic', realm="api"):
-        super(Http401, self).__init__()
-        if typ == 'basic':
-            self['WWW-Authenticate'] = 'Basic realm="%s"' % realm
-        else:
-            assert False, 'Invalid type ' + str(typ)
-            self.status_code = 403
-
-
 class Http403(JSONErrorResponse, http.HttpResponseForbidden):
-    """HTTP 403 FORBIDDEN"""
+    """HTTP 403 Forbidden"""
     pass
 
 
@@ -82,12 +81,3 @@ class Http409(JSONErrorResponse):
 class Http500(JSONErrorResponse):
     """HTTP 500 Internal Server Error"""
     status_code = 500
-
-
-class HttpError(Exception):
-    """Exception that results in returning a JSONErrorResponse to the user."""
-
-    def __init__(self, code, reason, **additional_data):
-        super(HttpError, self).__init__(self, reason)
-        self.response = JSONErrorResponse(reason, **additional_data)
-        self.response.status_code = code

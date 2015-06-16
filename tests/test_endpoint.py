@@ -108,7 +108,7 @@ class TestEndpoint(TestCase):
 
         self.assertEqual(r.status_code, 500)
         self.assertEqual(r.json['errors'][0]['detail'], "I'm being a bad view")
-        self.assertTrue('traceback' in r.json)
+        self.assertTrue('traceback' in r.json['errors'][0]['meta'])
 
     def test_raw_request_body(self):
         raw = b'\x01\x02\x03'

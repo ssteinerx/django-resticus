@@ -1,6 +1,7 @@
 from django.forms.models import modelform_factory
 
-from .http import HttpError, Http200, Http201
+from .exceptions import HttpError
+from .http import Http200, Http201
 from .models import serialize
 from .views import Endpoint
 

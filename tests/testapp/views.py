@@ -1,12 +1,11 @@
 import base64
 
-from restless.views import Endpoint
-from restless.models import serialize
-from restless.http import Http201, Http403, Http404, Http400, HttpError
 from restless.auth import (BasicHttpAuthMixin, login_required)
-from restless.views import AuthenticateEndpoint
-
+from restless.exceptions import HttpError
+from restless.http import Http201, Http403, Http404, Http400
+from restless.models import serialize
 from restless.modelviews import ListEndpoint, DetailEndpoint, ActionEndpoint
+from restless.views import AuthenticateEndpoint, Endpoint
 
 from .models import *
 from .forms import *
@@ -87,7 +86,7 @@ class EchoView(Endpoint):
 
 class ErrorRaisingView(Endpoint):
     def get(self, request):
-        raise HttpError(400, 'raised error', extra_data='foo')
+        raise HttpError(400, 'raised error')
 
 
 class PublisherAutoList(ListEndpoint):

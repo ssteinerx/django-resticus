@@ -1,13 +1,18 @@
-import traceback
-
 from django.conf import settings
+from django.contrib.auth.models import AnonymousUser
+from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext as _
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 
+from .auth import UsernamePasswordAuthMixin, login_required
 from .compat import json
-from .http import Http200, Http500, HttpError
+from .exceptions import APIException, AuthenticationFailed, ParseError
+from .http import Http200, Http500
+from .models import serialize
+from .settings import api_settings
 
 __all__ = ['Endpoint']
 
@@ -47,8 +52,10 @@ class Endpoint(View):
     immediately return the error to the client.
     """
 
+    authentication_classes = api_settings.DEFAULT_AUTHENTICATION_CLASSES
+
     @staticmethod
-    def _parse_content_type(content_type):
+    def parse_content_type(content_type):
         if ';' in content_type:
             ct, params = content_type.split(';', 1)
             try:
@@ -60,35 +67,44 @@ class Endpoint(View):
             params = {}
         return ct, params
 
-    def _parse_body(self, request):
+    def parse_body(self, request):
         if request.method not in ['POST', 'PUT', 'PATCH']:
             return
 
-        ct, ct_params = self._parse_content_type(request.content_type)
+        ct, ct_params = self.parse_content_type(request.content_type)
         if ct == 'application/json':
             charset = ct_params.get('charset', 'utf-8')
             try:
                 data = request.body.decode(charset)
-                request.data = json.loads(data)
-            except Exception as ex:
-                raise HttpError(400, 'invalid JSON payload: %s' % ex)
+                return json.loads(data)
+            except Exception as err:
+                raise ParseError(_('Malformed JSON payload: {0}').format(err))
         elif ((ct == 'application/x-www-form-urlencoded') or
                 (ct.startswith('multipart/form-data'))):
-            request.data = dict((k, v) for (k, v) in request.POST.items())
-        else:
-            request.data = request.body
+            return dict((k, v) for (k, v) in request.POST.items())
+        return request.body
 
-    def _process_authenticate(self, request):
-        if hasattr(self, 'authenticate') and callable(self.authenticate):
-            auth_response = self.authenticate(request)
+    def authenticate(self, request):
+        for auth in self.get_authenticators():
+            user = auth.authenticate(request)
+            if user is not None:
+                return user
+        return AnonymousUser()
 
-            if isinstance(auth_response, HttpResponse):
-                return auth_response
-            elif auth_response is None:
-                pass
-            else:
-                raise TypeError('authenticate method must return '
-                    'HttpResponse instance or None')
+    def get_authenticators(self):
+        """
+        Instantiates and returns the list of authenticators that this view can use.
+        """
+        return [auth() for auth in self.authentication_classes]
+
+    def get_authenticate_header(self, request):
+        """
+        If a request is unauthenticated, determine the WWW-Authenticate
+        header to use for 401 responses, if any.
+        """
+        authenticators = self.get_authenticators()
+        if authenticators:
+            return authenticators[0].authenticate_header(request)
 
     @method_decorator(csrf_exempt)
     def dispatch(self, request, *args, **kwargs):
@@ -98,20 +114,46 @@ class Endpoint(View):
         request.raw_data = request.body
 
         try:
-            self._parse_body(request)
-            authentication_required = self._process_authenticate(request)
-            if authentication_required:
-                return authentication_required
-
+            request.user = self.authenticate(request)
+            request.data = self.parse_body(request)
             response = super(Endpoint, self).dispatch(request, *args, **kwargs)
-        except HttpError as err:
-            response = err.response
-        except Exception as ex:
-            if settings.DEBUG:
-                response = Http500(str(ex), traceback=traceback.format_exc())
+        except AuthenticationFailed as err:
+            # WWW-Authenticate header for 401 responses, else coerce to 403
+            auth_header = self.get_authenticate_header(self.request)
+            if auth_header:
+                err.response['WWW-Authenticate'] = auth_header
             else:
-                raise
+                err.response.status_code = 403
+            raise
+        except APIException as err:
+            response = err.response
+        except Exception as err:
+            if settings.DEBUG:
+                response = Http500(str(err))
+            else:
+                response = Http500(_('Internal server error.'))
 
         if not isinstance(response, HttpResponse):
             response = Http200(response)
         return response
+
+
+class AuthenticateEndpoint(Endpoint, UsernamePasswordAuthMixin):
+    """
+    Session-based authentication API endpoint. Provides a GET method for
+    authenticating the user based on passed-in "username" and "password"
+    request params. On successful authentication, the method returns
+    authenticated user details.
+
+    Uses :py:class:`UsernamePasswordAuthMixin` to actually implement the
+    Authentication API endpoint.
+
+    On success, the user will get a response with their serialized User
+    object, containing id, username, first_name, last_name and email fields.
+    """
+
+    user_fields = ('id', 'username', 'first_name', 'last_name', 'email')
+
+    @login_required
+    def get(self, request):
+        return Http200(serialize(request.user, fields=self.user_fields))
