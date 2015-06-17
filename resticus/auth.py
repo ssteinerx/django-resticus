@@ -2,6 +2,7 @@ import base64
 
 from django.conf import settings
 from django.contrib import auth
+from django.core.exceptions import ObjectDoesNotExist
 from django.middleware.csrf import CsrfViewMiddleware
 from django.utils.encoding import DjangoUnicodeDecodeError
 from django.utils.translation import ugettext as _
@@ -109,12 +110,6 @@ class BasicHttpAuth(BaseAuth):
 
 class TokenAuth(BaseAuth):
     def authenticate(self, request):
-        self.model = self.get_token_model()
-
-        if self.model is None:
-            msg = _('Token authentication is not enabled.')
-            raise AuthenticationFailed(msg)
-
         authdata = get_authorization_header(request).split()
 
         if not authdata or authdata[0].lower() != b'token':
@@ -135,13 +130,14 @@ class TokenAuth(BaseAuth):
             return
         return get_model(api_settings.TOKEN_MODEL)
 
+    def lookup_user(self, request, key):
+        return get_user_model().objects.get(api_token__key=key)
+
     def authenticate_credentials(self, request, key):
         try:
-            token = self.model.objects.select_related('user').get(key=key)
-        except self.model.DoesNotExist:
+            user = self.lookup_user(request, key)
+        except ObjectDoesNotExist:
             raise AuthenticationFailed(_('Invalid token.'))
-
-        user = token.get_user()
 
         if not user.is_active:
             raise AuthenticationFailed(_('User inactive or deleted.'))

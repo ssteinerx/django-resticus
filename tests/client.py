@@ -16,8 +16,6 @@ class TestClient(Client):
             response.json = json.loads(response.content.decode('utf-8'))
         except Exception:
             response.json = None
-        if settings.DEBUG:
-            print(response.json)
         return response
 
     def get(self, url_name, data={}, follow=False, extra={}, *args, **kwargs):
