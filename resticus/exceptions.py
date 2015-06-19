@@ -29,11 +29,15 @@ class NotFound(APIException):
     response_class = http.Http404
 
 
+class Forbidden(APIException):
+    response_class = http.Http403
+
+
 class ParseError(APIException):
     response_class = http.Http400
 
 
-class ValidationError(APIException):
+class FormValidationError(APIException):
     response_class = http.Http400
 
     def __init__(self, form, **kwargs):

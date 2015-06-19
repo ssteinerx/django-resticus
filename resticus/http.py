@@ -61,7 +61,7 @@ class Http400(http.HttpResponseBadRequest, JSONResponse):
         data = {'errors': [{'detail': reason}]}
         if details is not None:
             data['errors'][0]['meta'] = {'details': details}
-        super(JSONResponse, self).__init__(data, **kwargs)
+        super(Http400, self).__init__(data, **kwargs)
 
 
 class Http401(JSONErrorResponse):

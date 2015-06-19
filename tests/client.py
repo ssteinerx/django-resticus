@@ -21,7 +21,6 @@ class TestClient(Client):
                 print(response.json['errors'][0]['meta']['traceback'])
             except Exception:
                 print(response.content)
-            print(response.json)
         return response
 
     def get(self, url_name, data={}, follow=False, extra={}, *args, **kwargs):

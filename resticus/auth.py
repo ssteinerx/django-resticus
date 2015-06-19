@@ -8,8 +8,8 @@ from django.utils.encoding import DjangoUnicodeDecodeError
 from django.utils.translation import ugettext as _
 
 from .compat import get_model, get_user_model, smart_text
-from .exceptions import AuthenticationFailed
-from .http import HTTP_HEADER_ENCODING, Http200, Http403
+from .exceptions import AuthenticationFailed, Forbidden
+from .http import HTTP_HEADER_ENCODING, Http200
 from .settings import api_settings
 
 
@@ -59,7 +59,7 @@ class SessionAuth(BaseAuth):
     def enforce_csrf(self, request):
         reason = CSRFCheck().process_view(request, None, (), {})
         if reason:
-            raise HttpError(403, _('CSRF Failed: {0}').format(reason))
+            raise Forbidden(_('CSRF Failed: {0}').format(reason))
 
 
 class BasicHttpAuth(BaseAuth):

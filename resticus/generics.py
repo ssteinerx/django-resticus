@@ -3,13 +3,13 @@ from django.forms.models import modelform_factory
 from django.utils.translation import ugettext as _
 
 from . import http, mixins
-from .exceptions import HttpError, NotFound, ValidationError
+from .exceptions import HttpError, NotFound, FormValidationError
 from .utils import serialize
 from .views import Endpoint
 
 __all__ = ['GenericEndpoint', 'CreateEndpoint', 'ListEndpoint',
     'DetailEndpoint', 'UpdateEndpoint', 'DeleteEndpoint', 'ListCreateEndpoint',
-    'DetailUpdateEndpoint', 'DetailDeleteEndpoint', 'DetailUpdateDeleteEndpoint',]
+    'DetailUpdateEndpoint', 'DetailDeleteEndpoint', 'DetailUpdateDeleteEndpoint']
 
 
 class GenericEndpoint(Endpoint):
@@ -69,7 +69,7 @@ class GenericEndpoint(Endpoint):
         return {'data': self.serialize(self.object)}
 
     def form_invalid(self, form):
-        raise InvalidForm(form=form)
+        raise FormValidationError(form=form)
 
     def serialize(self, objs):
         return serialize(objs, fields=self.fields)
@@ -78,35 +78,35 @@ class GenericEndpoint(Endpoint):
 class CreateEndpoint(
     mixins.CreateModelMixin,
     GenericEndpoint
-    ):
+):
     pass
 
 
 class ListEndpoint(
     mixins.ListModelMixin,
     GenericEndpoint
-    ):
+):
     pass
 
 
 class DetailEndpoint(
     mixins.DetailModelMixin,
     GenericEndpoint
-    ):
+):
     pass
 
 
 class UpdateEndpoint(
     mixins.UpdateModelMixin,
     GenericEndpoint
-    ):
+):
     pass
 
 
 class DeleteEndpoint(
     mixins.DeleteModelMixin,
     GenericEndpoint
-    ):
+):
     pass
 
 
@@ -114,7 +114,7 @@ class ListCreateEndpoint(
     mixins.ListModelMixin,
     mixins.CreateModelMixin,
     GenericEndpoint
-    ):
+):
     pass
 
 
@@ -122,7 +122,7 @@ class DetailUpdateEndpoint(
     mixins.DetailModelMixin,
     mixins.UpdateModelMixin,
     GenericEndpoint
-    ):
+):
     pass
 
 
@@ -130,7 +130,7 @@ class DetailDeleteEndpoint(
     mixins.DetailModelMixin,
     mixins.DeleteModelMixin,
     GenericEndpoint
-    ):
+):
     pass
 
 
@@ -139,5 +139,5 @@ class DetailUpdateDeleteEndpoint(
     mixins.UpdateModelMixin,
     mixins.DeleteModelMixin,
     GenericEndpoint
-    ):
+):
     pass
