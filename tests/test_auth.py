@@ -15,6 +15,7 @@ class TestAuth(TestCase):
         )
         self.token = TokenAuth.get_token_model().objects.create(user=self.user)
 
+    @debug
     def test_session_login_success(self):
         """Test that correct username/password login succeeds"""
         r = self.client.post('session_auth', data={
@@ -23,6 +24,7 @@ class TestAuth(TestCase):
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.json['data']['username'], 'foo')
 
+    @debug
     def test_session_login_failure(self):
         """Test that incorrect username/password login fails"""
         r = self.client.post('session_auth', data={

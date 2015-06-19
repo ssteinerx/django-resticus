@@ -1,9 +1,9 @@
 import base64
 
+from resticus import generics
 from resticus.auth import login_required, BasicHttpAuth
 from resticus.exceptions import HttpError
 from resticus.http import Http201, Http403, Http404, Http400
-from resticus.modelviews import ListEndpoint, DetailEndpoint, ActionEndpoint
 from resticus.utils import serialize
 from resticus.views import Endpoint
 
@@ -11,75 +11,34 @@ from .models import *
 from .forms import *
 
 __all__ = ['AuthorList', 'AuthorDetail', 'PublisherList', 'PublisherDetail',
-    'ReadOnlyPublisherList', 'PublisherAction', 'BookDetail',
-    'FailsIntentionally', 'WildcardHandler', 'EchoView', 'ErrorRaisingView',
-    'BasicAuthEndpoint']
+    'ReadOnlyPublisherList', 'BookDetail', 'FailsIntentionally',
+    'WildcardHandler', 'EchoView', 'ErrorRaisingView', 'BasicAuthEndpoint']
 
 
-class AuthorList(Endpoint):
-    def get(self, request):
-        return serialize(Author.objects.all())
-
-    def post(self, request):
-        form = AuthorForm(request.data)
-        if form.is_valid():
-            author = form.save()
-            return Http201(serialize(author))
-        else:
-            return Http400(reason='invalid author data',
-                details=form.errors)
+class AuthorList(generics.ListCreateEndpoint):
+    model = Author
+    form_class = AuthorForm
 
 
-class AuthorDetail(Endpoint):
-    def get(self, request, author_id=None):
-        author_id = int(author_id)
-        try:
-            return serialize(Author.objects.get(id=author_id))
-        except Author.DoesNotExist:
-            return Http404(reason='no such author')
-
-    def delete(self, request, author_id=None):
-        author_id = int(author_id)
-        Author.objects.get(id=author_id).delete()
-        return 'ok'
-
-    def put(self, request, author_id=None):
-        author_id = int(author_id)
-        try:
-            author = Author.objects.get(id=author_id)
-        except Author.DoesNotExist:
-            return Http404(reason='no such author')
-
-        form = AuthorForm(request.data, instance=author)
-        if form.is_valid():
-            author = form.save()
-            return serialize(author)
-        else:
-            return Http400(reason='invalid author data',
-                details=form.errors)
+class AuthorDetail(generics.DetailUpdateDeleteEndpoint):
+    model = Author
+    form_class = AuthorForm
+    lookup_url_kwarg = 'author_id'
 
 
-class PublisherList(ListEndpoint):
+class PublisherList(generics.ListCreateEndpoint):
     model = Publisher
 
 
-class PublisherDetail(DetailEndpoint):
+class PublisherDetail(generics.DetailUpdateDeleteEndpoint):
     model = Publisher
 
 
-class ReadOnlyPublisherList(ListEndpoint):
-    model = Publisher
-    methods = ['GET']
-
-
-class PublisherAction(ActionEndpoint):
+class ReadOnlyPublisherList(generics.DetailEndpoint):
     model = Publisher
 
-    def action(self, obj, *args, **kwargs):
-        return {'result': 'done'}
 
-
-class BookDetail(DetailEndpoint):
+class BookDetail(generics.DetailEndpoint):
     model = Book
     lookup_field = 'isbn'
 

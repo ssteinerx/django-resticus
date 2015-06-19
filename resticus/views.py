@@ -15,7 +15,7 @@ from .http import Http200, Http405, Http500
 from .settings import api_settings
 from .utils import serialize
 
-__all__ = ['Endpoint']
+__all__ = ['Endpoint', 'SessionAuthEndpoint', 'TokenAuthEndpoint']
 
 
 class Endpoint(View):
@@ -116,7 +116,7 @@ class Endpoint(View):
             return authenticators[0].authenticate_header(request)
 
     def http_method_not_allowed(self, request, *args, **kwargs):
-        return Http405(request.method, self._allowed_methods())
+        return Http405(request.method, permitted_methods=self._allowed_methods())
 
     @method_decorator(csrf_exempt)
     def dispatch(self, request, *args, **kwargs):

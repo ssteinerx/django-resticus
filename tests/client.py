@@ -16,6 +16,12 @@ class TestClient(Client):
             response.json = json.loads(response.content.decode('utf-8'))
         except Exception:
             response.json = None
+        if response.status_code == 500 and settings.DEBUG:
+            try:
+                print(response.json['errors'][0]['meta']['traceback'])
+            except Exception:
+                print(response.content)
+            print(response.json)
         return response
 
     def get(self, url_name, data={}, follow=False, extra={}, *args, **kwargs):

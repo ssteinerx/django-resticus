@@ -1,7 +1,7 @@
 import base64
 from django.test import TestCase
 from resticus.compat import json
-from .client import TestClient
+from .client import TestClient, debug
 from .testapp.models import Publisher, Author, Book
 
 try:
@@ -20,16 +20,16 @@ class TestEndpoint(TestCase):
 
         r = self.client.get('author_list')
         self.assertEqual(r.status_code, 200)
-        self.assertEqual(len(r.json), 1)
-        self.assertEqual(r.json[0]['id'], self.author.id)
+        self.assertEqual(len(r.json['data']), 1)
+        self.assertEqual(r.json['data'][0]['id'], self.author.id)
 
     def test_author_details(self):
         """Exercise passing parameters to GET request"""
 
         r = self.client.get('author_detail', author_id=self.author.id)
         self.assertEqual(r.status_code, 200)
-        self.assertEqual(r.json['id'], self.author.id)
-        self.assertEqual(r.json['name'], 'User Foo')
+        self.assertEqual(r.json['data']['id'], self.author.id)
+        self.assertEqual(r.json['data']['name'], 'User Foo')
 
     def test_author_details_not_found(self):
         """Exercise returning arbitrary HTTP status codes from view"""
@@ -49,9 +49,9 @@ class TestEndpoint(TestCase):
             'name': 'New User',
         }), content_type='application/x-www-form-urlencoded')
         self.assertEqual(r.status_code, 201)
-        self.assertEqual(r.json['name'], 'New User')
-        self.assertEqual(r.json['name'],
-            Author.objects.get(id=r.json['id']).name)
+        self.assertEqual(r.json['data']['name'], 'New User')
+        self.assertEqual(r.json['data']['name'],
+            Author.objects.get(id=r.json['data']['id']).name)
 
     def test_create_author_multipart(self):
         """Exercise multipart/form-data POST"""
@@ -60,9 +60,9 @@ class TestEndpoint(TestCase):
             'name': 'New User',
         })  # multipart/form-data is default in test client
         self.assertEqual(r.status_code, 201)
-        self.assertEqual(r.json['name'], 'New User')
-        self.assertEqual(r.json['name'],
-            Author.objects.get(id=r.json['id']).name)
+        self.assertEqual(r.json['data']['name'], 'New User')
+        self.assertEqual(r.json['data']['name'],
+            Author.objects.get(id=r.json['data']['id']).name)
 
     def test_create_author_json(self):
         """Exercise application/json POST"""
@@ -71,9 +71,9 @@ class TestEndpoint(TestCase):
             'name': 'New User',
         }), content_type='application/json; charset=utf-8')
         self.assertEqual(r.status_code, 201)
-        self.assertEqual(r.json['name'], 'New User')
-        self.assertEqual(r.json['name'],
-            Author.objects.get(id=r.json['id']).name)
+        self.assertEqual(r.json['data']['name'], 'New User')
+        self.assertEqual(r.json['data']['name'],
+            Author.objects.get(id=r.json['data']['id']).name)
 
     def test_invalid_json_payload(self):
         """Exercise invalid JSON handling"""
@@ -86,7 +86,7 @@ class TestEndpoint(TestCase):
         """Exercise DELETE request"""
 
         r = self.client.delete('author_detail', author_id=self.author.id)
-        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.status_code, 204)
         self.assertEqual(Author.objects.count(), 0)
 
     def test_change_author(self):
@@ -96,19 +96,16 @@ class TestEndpoint(TestCase):
             'name': 'User Bar'
         }), author_id=self.author.id, content_type='application/json')
         self.assertEqual(r.status_code, 200)
-        self.assertEqual(r.json['name'], 'User Bar')
-        self.assertEqual(r.json['name'],
-            Author.objects.get(id=r.json['id']).name)
+        self.assertEqual(r.json['data']['name'], 'User Bar')
+        self.assertEqual(r.json['data']['name'],
+            Author.objects.get(id=r.json['data']['id']).name)
 
     def test_view_failure(self):
         """Exercise exception handling"""
 
-        with self.settings(DEBUG=True):
-            r = self.client.get('fail_view')
-
+        r = self.client.get('fail_view')
         self.assertEqual(r.status_code, 500)
-        self.assertEqual(r.json['errors'][0]['detail'], "I'm being a bad view")
-        self.assertTrue('traceback' in r.json['errors'][0]['meta'])
+        self.assertEqual(r.json['errors'][0]['detail'], "Internal server error.")
 
     def test_raw_request_body(self):
         raw = b'\x01\x02\x03'

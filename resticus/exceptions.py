@@ -1,16 +1,16 @@
-from .http import JSONErrorResponse
 from django.utils.translation import ugettext as _
+
+from . import http
 
 
 class APIException(Exception):
     """Exception that results in returning a JSONErrorResponse to the user."""
 
-    status_code = 500
+    response_class = http.JSONErrorResponse
 
     def __init__(self, reason, **additional_data):
         super(APIException, self).__init__(reason)
-        additional_data.setdefault('status', self.status_code)
-        self.response = JSONErrorResponse(reason, **additional_data)
+        self.response = self.response_class(reason, **additional_data)
 
 
 class HttpError(APIException):
@@ -22,12 +22,21 @@ class HttpError(APIException):
 
 
 class AuthenticationFailed(APIException):
-    status_code = 401
+    response_class = http.Http401
 
 
 class NotFound(APIException):
-    status_code = 404
+    response_class = http.Http404
 
 
 class ParseError(APIException):
-    status_code = 400
+    response_class = http.Http400
+
+
+class ValidationError(APIException):
+    response_class = http.Http400
+
+    def __init__(self, form, **kwargs):
+        kwargs.setdefault('details', form.errors)
+        msg = _('Invalid data')
+        super(ValidationError, self).__init__(self, msg, **kwargs)

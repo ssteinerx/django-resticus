@@ -27,5 +27,5 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
     packages=find_packages(),
-    install_requires=['Django>=1.5', 'six>=1.3.0'],
+    install_requires=['Django>=1.6', 'six>=1.3.0'],
 )

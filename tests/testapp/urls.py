@@ -22,8 +22,6 @@ urlpatterns = patterns('',
         name='readonly_publisher_list'),
     url(r'^publishers/(?P<pk>\d+)$', PublisherDetail.as_view(),
         name='publisher_detail'),
-    url(r'^publishers/(?P<pk>\d+)/do_something$', PublisherAction.as_view(),
-        name='publisher_action'),
 
     url(r'^books/(?P<isbn>\d+)$', BookDetail.as_view(),
         name='book_detail'),
