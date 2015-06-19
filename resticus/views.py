@@ -8,10 +8,10 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 
-from .auth import SessionAuth, TokenAuth, login_required
+from .auth import SessionAuth, TokenAuth
 from .compat import get_user_model, json
 from .exceptions import APIException, AuthenticationFailed, ParseError
-from .http import Http200, Http500
+from .http import Http200, Http405, Http500
 from .settings import api_settings
 from .utils import serialize
 
@@ -87,10 +87,17 @@ class Endpoint(View):
         return request.body
 
     def authenticate(self, request):
-        for auth in self.get_authenticators():
-            user = auth.authenticate(request)
-            if user is not None:
+        for authenticator in self.get_authenticators():
+            user = authenticator.authenticate(request)
+            if user and user.is_authenticated():
                 return user
+
+        # User is not authenticated, so short circuit if login_required.
+        handler = getattr(self, request.method.lower(), None)
+        if getattr(handler, 'login_required', self.login_required):
+            msg = _('You must be logged in to access this endpoint.')
+            raise AuthenticationFailed(msg)
+
         return AnonymousUser()
 
     def get_authenticators(self):
@@ -107,6 +114,9 @@ class Endpoint(View):
         authenticators = self.get_authenticators()
         if authenticators:
             return authenticators[0].authenticate_header(request)
+
+    def http_method_not_allowed(self, request, *args, **kwargs):
+        return Http405(request.method, self._allowed_methods())
 
     @method_decorator(csrf_exempt)
     def dispatch(self, request, *args, **kwargs):
@@ -159,18 +169,23 @@ class SessionAuthEndpoint(Endpoint):
 
     authentication_classes = (SessionAuth,)
 
+    login_required = False
+
     user_fields = ('id', 'username', 'first_name', 'last_name', 'email')
 
-    @login_required
     def get(self, request):
+        import code
         return Http200({
             'data': serialize(request.user, fields=self.user_fields)
         })
 
+    get.login_required = True
+
     def post(self, request):
         username_field = getattr(get_user_model(), 'USERNAME_FIELD', 'username')
 
-        username = request.data.get(username_field)
+        username = request.data.get(username_field,
+            request.data.get('username'))
         password = request.data.get('password')
 
         credentials = {
@@ -192,18 +207,22 @@ class SessionAuthEndpoint(Endpoint):
 class TokenAuthEndpoint(Endpoint):
     authentication_classes = (TokenAuth,)
 
+    login_required = False
+
     user_fields = ('id', 'username', 'first_name', 'last_name', 'email')
 
-    @login_required
     def get(self, request):
         data = serialize(request.user, fields=self.user_fields)
-        data['api_token'] = request.user.api_token.key
+        data['api_token'] = self.get_token(request).key
         return Http200({'data': data})
+
+    get.login_required = True
 
     def post(self, request):
         username_field = getattr(get_user_model(), 'USERNAME_FIELD', 'username')
 
-        username = request.data.get(username_field)
+        username = request.data.get(username_field,
+            request.data.get('username'))
         password = request.data.get('password')
 
         credentials = {
@@ -218,9 +237,9 @@ class TokenAuthEndpoint(Endpoint):
         if not request.user.is_active:
             raise AuthenticationFailed(_('User inactive or deleted.'))
 
-        TokenModel = TokenAuth.get_token_model()
-        token = TokenModel.objects.filter(user=request.user)
-        if not token.exists():
-            TokenModel.objects.create(user=request.user)
-
         return self.get(request)
+
+    def get_token(self, request):
+        TokenModel = TokenAuth.get_token_model()
+        token, created = TokenModel.objects.get_or_create(user=request.user)
+        return token

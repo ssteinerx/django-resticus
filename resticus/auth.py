@@ -2,7 +2,7 @@ import base64
 
 from django.conf import settings
 from django.contrib import auth
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ImproperlyConfigured
 from django.middleware.csrf import CsrfViewMiddleware
 from django.utils.encoding import DjangoUnicodeDecodeError
 from django.utils.translation import ugettext as _
@@ -48,7 +48,7 @@ class SessionAuth(BaseAuth):
         user = getattr(request, 'user', None)
 
         if not user:
-            return None
+            return
 
         if user.is_authenticated() and not user.is_active:
             raise AuthenticationFailed(_('User inactive or deleted.'))
@@ -127,17 +127,20 @@ class TokenAuth(BaseAuth):
     @staticmethod
     def get_token_model():
         if api_settings.TOKEN_MODEL is None:
-            return
+            msg = _('You must set `RESTICUS["TOKEN_MODEL"]` in your settings '
+                'to use TokenAuth.')
+            raise ImproperlyConfigured(msg)
         return get_model(api_settings.TOKEN_MODEL)
 
     def lookup_user(self, request, key):
-        return get_user_model().objects.get(api_token__key=key)
+        User = get_user_model()
+        try:
+            return User.objects.get(api_token__key=key)
+        except User.DoesNotExist:
+            raise AuthenticationFailed(_('Invalid token.'))
 
     def authenticate_credentials(self, request, key):
-        try:
-            user = self.lookup_user(request, key)
-        except ObjectDoesNotExist:
-            raise AuthenticationFailed(_('Invalid token.'))
+        user = self.lookup_user(request, key)
 
         if not user.is_active:
             raise AuthenticationFailed(_('User inactive or deleted.'))
@@ -151,15 +154,8 @@ class TokenAuth(BaseAuth):
 def login_required(fn):
     """
     Decorator for :py:class:`resticus.views.Endpoint` methods to require
-    authenticated user. If the user isn't authenticated, HTTP 403 is
-    returned immediately (HTTP 401 if Basic HTTP authentication is used).
+    authenticated user. This simply sets the `login_required` attribute to
+    be handled by the authenticate method of :py:class:`resticus.views.Endpoint`.
     """
-    def wrapper(self, request, *args, **kwargs):
-        user = getattr(request, 'user', None)
-        if user is None or not user.is_authenticated() or not user.is_active:
-            msg = _('You must be logged in to access this endpoint.')
-            raise AuthenticationFailed(msg)
-        return fn(self, request, *args, **kwargs)
-    wrapper.__name__ = fn.__name__
-    wrapper.__doc__ = fn.__doc__
-    return wrapper
+    fn.login_required = True
+    return fn

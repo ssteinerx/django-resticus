@@ -4,6 +4,7 @@ import traceback
 from django import http
 from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
+from django.utils.translation import ugettext as _
 
 from .compat import json
 
@@ -22,10 +23,8 @@ class JSONResponse(http.HttpResponse):
         super(JSONResponse, self).__init__(content=data, **kwargs)
 
 
-class JSONErrorResponse(JSONResponse):
-    """A JSON response class for API errors."""
-
-    status_code = 500
+class JSONErrorResponse(JSONResponse, http.HttpResponseServerError):
+    """A JSON response class for simple API errors."""
 
     def __init__(self, reason, **kwargs):
         data = {'errors': [{
@@ -62,9 +61,20 @@ class Http403(JSONErrorResponse, http.HttpResponseForbidden):
     pass
 
 
-class Http404(JSONErrorResponse):
+class Http404(JSONErrorResponse, http.HttpResponseNotFound):
     """HTTP 404 Not Found"""
-    status_code = 404
+    pass
+
+
+class Http405(JSONResponse, http.HttpResponseNotAllowed):
+    """HTTP 405 Method Not Allowed"""
+
+    def __init__(self, method, permitted_methods):
+        data = {'errors': [{
+            'detail': _('Method "{0}" not allowed').format(method),
+        }]}
+        super(Http405, self).__init__(data,
+            permitted_methods=permitted_methods)
 
 
 class Http409(JSONErrorResponse):
@@ -74,4 +84,4 @@ class Http409(JSONErrorResponse):
 
 class Http500(JSONErrorResponse):
     """HTTP 500 Internal Server Error"""
-    status_code = 500
+    pass
