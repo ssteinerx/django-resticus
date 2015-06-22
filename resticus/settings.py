@@ -11,12 +11,16 @@ DEFAULTS = {
         'resticus.auth.SessionAuth',
         'resticus.auth.BasicHttpAuth',
     ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'resticus.permissions.AllowAny',
+    ),
     'LOGIN_REQUIRED': False,
     'TOKEN_MODEL': None,
 }
 
 IMPORT_STRINGS = (
     'DEFAULT_AUTHENTICATION_CLASSES',
+    'DEFAULT_PERMISSION_CLASSES',
 )
 
 

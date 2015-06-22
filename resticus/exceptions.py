@@ -7,9 +7,11 @@ class APIException(Exception):
     """Exception that results in returning a JSONErrorResponse to the user."""
 
     response_class = http.JSONErrorResponse
+    default_reason = None
 
-    def __init__(self, reason, **additional_data):
-        super(APIException, self).__init__(reason)
+    def __init__(self, reason=None, **additional_data):
+        super(APIException, self).__init__()
+        reason = reason or self.default_reason
         self.response = self.response_class(reason, **additional_data)
 
 
@@ -23,6 +25,12 @@ class HttpError(APIException):
 
 class AuthenticationFailed(APIException):
     response_class = http.Http401
+    default_reason = _('Incorrect authentication credentials.')
+
+
+class NotAuthenticated(APIException):
+    response_class = http.Http401
+    default_reason = _('Authentication credentials were not provided.')
 
 
 class NotFound(APIException):
@@ -35,12 +43,18 @@ class Forbidden(APIException):
 
 class ParseError(APIException):
     response_class = http.Http400
+    default_reason = _('Malformed request.')
 
 
-class FormValidationError(APIException):
+class PermissionDenied(APIException):
+    response_class = http.Http403
+    default_reason = _('You do not have permission to perform this action.')
+
+
+class ValidationError(APIException):
     response_class = http.Http400
+    default_reason = _('Malformed request.')
 
     def __init__(self, form, **kwargs):
         kwargs.setdefault('details', form.errors)
-        msg = _('Invalid data')
-        super(ValidationError, self).__init__(self, msg, **kwargs)
+        super(ValidationError, self).__init__(self, **kwargs)

@@ -27,8 +27,10 @@ class JSONResponse(http.HttpResponse):
 class JSONErrorResponse(http.HttpResponseServerError, JSONResponse):
     """A JSON response class for simple API errors."""
 
-    def __init__(self, reason, **kwargs):
-        data = {'errors': [{'detail': reason}]}
+    default_reason = None
+
+    def __init__(self, reason=None, **kwargs):
+        data = {'errors': [{'detail': reason or self.default_reason}]}
 
         if settings.DEBUG:
             exc = sys.exc_info()

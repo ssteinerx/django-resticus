@@ -8,10 +8,9 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 
+from . import exceptions, http
 from .auth import SessionAuth, TokenAuth
 from .compat import get_user_model, json
-from .exceptions import APIException, AuthenticationFailed, ParseError
-from .http import Http200, Http405, Http500
 from .settings import api_settings
 from .utils import serialize
 
@@ -55,6 +54,7 @@ class Endpoint(View):
 
     authentication_classes = api_settings.DEFAULT_AUTHENTICATION_CLASSES
     login_required = api_settings.LOGIN_REQUIRED
+    permission_classes = api_settings.DEFAULT_PERMISSION_CLASSES
 
     @staticmethod
     def parse_content_type(content_type):
@@ -80,23 +80,25 @@ class Endpoint(View):
                 data = request.body.decode(charset)
                 return json.loads(data)
             except Exception as err:
-                raise ParseError(_('Malformed JSON payload: {0}').format(err))
+                raise exceptions.ParseError()
         elif ((ct == 'application/x-www-form-urlencoded') or
                 (ct.startswith('multipart/form-data'))):
             return dict((k, v) for (k, v) in request.POST.items())
         return request.body
 
     def authenticate(self, request):
+        request.authenticator = None
         for authenticator in self.get_authenticators():
             user = authenticator.authenticate(request)
             if user and user.is_authenticated():
+                request.authenticator = authenticator
                 return user
 
         # User is not authenticated, so short circuit if login_required.
         handler = getattr(self, request.method.lower(), None)
         if getattr(handler, 'login_required', self.login_required):
             msg = _('You must be logged in to access this endpoint.')
-            raise AuthenticationFailed(msg)
+            raise exceptions.AuthenticationFailed(msg)
 
         return AnonymousUser()
 
@@ -115,8 +117,40 @@ class Endpoint(View):
         if authenticators:
             return authenticators[0].authenticate_header(request)
 
+    def get_permissions(self):
+        """
+        Instantiates and returns the list of permissions that this view requires.
+        """
+        return [permission() for permission in self.permission_classes]
+
+    def check_permissions(self, request):
+        """
+        Check if the request should be permitted.
+        Raises an appropriate exception if the request is not permitted.
+        """
+        for permission in self.get_permissions():
+            if not permission.has_permission(request, self):
+                self.permission_denied(request)
+
+    def check_object_permissions(self, request, obj):
+        """
+        Check if the request should be permitted for a given object.
+        Raises an appropriate exception if the request is not permitted.
+        """
+        for perm in self.get_permissions():
+            if not perm.has_object_permission(request, self, obj):
+                self.permission_denied(request)
+
+    def permission_denied(self, request):
+        """
+        If request is not permitted, determine what kind of exception to raise.
+        """
+        if not request.authenticator:
+            raise exceptions.NotAuthenticated()
+        raise exceptions.PermissionDenied()
+
     def http_method_not_allowed(self, request, *args, **kwargs):
-        return Http405(request.method, permitted_methods=self._allowed_methods())
+        return http.Http405(request.method, permitted_methods=self._allowed_methods())
 
     @method_decorator(csrf_exempt)
     def dispatch(self, request, *args, **kwargs):
@@ -127,10 +161,11 @@ class Endpoint(View):
 
         try:
             request.user = self.authenticate(request)
+            self.check_permissions(request)
             request.data = self.parse_body(request)
             response = super(Endpoint, self).dispatch(request, *args, **kwargs)
 
-        except AuthenticationFailed as err:
+        except exceptions.AuthenticationFailed as err:
             # WWW-Authenticate header for 401 responses, else coerce to 403
             auth_header = self.get_authenticate_header(self.request)
             if auth_header:
@@ -139,17 +174,17 @@ class Endpoint(View):
                 err.response.status_code = 403
             response = err.response
 
-        except APIException as err:
+        except exceptions.APIException as err:
             response = err.response
 
         except Exception as err:
             if settings.DEBUG:
-                response = Http500(str(err))
+                response = http.Http500(str(err))
             else:
-                response = Http500(_('Internal server error.'))
+                response = http.Http500(_('Internal server error.'))
 
         if not isinstance(response, HttpResponse):
-            response = Http200(response)
+            response = http.Http200(response)
         return response
 
 
@@ -169,13 +204,15 @@ class SessionAuthEndpoint(Endpoint):
 
     authentication_classes = (SessionAuth,)
 
+    permission_classes = ()
+
     login_required = False
 
     user_fields = ('id', 'username', 'first_name', 'last_name', 'email')
 
     def get(self, request):
         import code
-        return Http200({
+        return http.Http200({
             'data': serialize(request.user, fields=self.user_fields)
         })
 
@@ -195,10 +232,10 @@ class SessionAuthEndpoint(Endpoint):
         request.user = auth.authenticate(**credentials)
 
         if request.user is None:
-            raise AuthenticationFailed(_('Invalid username/password.'))
+            raise exceptions.AuthenticationFailed(_('Invalid username/password.'))
 
         if not request.user.is_active:
-            raise AuthenticationFailed(_('User inactive or deleted.'))
+            raise exceptions.AuthenticationFailed(_('User inactive or deleted.'))
 
         auth.login(request, request.user)
         return self.get(request)
@@ -207,6 +244,8 @@ class SessionAuthEndpoint(Endpoint):
 class TokenAuthEndpoint(Endpoint):
     authentication_classes = (TokenAuth,)
 
+    permission_classes = ()
+
     login_required = False
 
     user_fields = ('id', 'username', 'first_name', 'last_name', 'email')
@@ -214,7 +253,7 @@ class TokenAuthEndpoint(Endpoint):
     def get(self, request):
         data = serialize(request.user, fields=self.user_fields)
         data['api_token'] = self.get_token(request).key
-        return Http200({'data': data})
+        return http.Http200({'data': data})
 
     get.login_required = True
 
@@ -232,10 +271,10 @@ class TokenAuthEndpoint(Endpoint):
         request.user = auth.authenticate(**credentials)
 
         if request.user is None:
-            raise AuthenticationFailed(_('Invalid username/password.'))
+            raise exceptions.AuthenticationFailed(_('Invalid username/password.'))
 
         if not request.user.is_active:
-            raise AuthenticationFailed(_('User inactive or deleted.'))
+            raise exceptions.AuthenticationFailed(_('User inactive or deleted.'))
 
         return self.get(request)
 

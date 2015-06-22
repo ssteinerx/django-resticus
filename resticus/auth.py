@@ -7,8 +7,8 @@ from django.middleware.csrf import CsrfViewMiddleware
 from django.utils.encoding import DjangoUnicodeDecodeError
 from django.utils.translation import ugettext as _
 
+from . import exceptions
 from .compat import get_model, get_user_model, smart_text
-from .exceptions import AuthenticationFailed, Forbidden
 from .http import HTTP_HEADER_ENCODING, Http200
 from .settings import api_settings
 
@@ -51,7 +51,7 @@ class SessionAuth(BaseAuth):
             return
 
         if user.is_authenticated() and not user.is_active:
-            raise AuthenticationFailed(_('User inactive or deleted.'))
+            raise exceptions.AuthenticationFailed(_('User inactive or deleted.'))
 
         self.enforce_csrf(request)
         return user
@@ -59,7 +59,7 @@ class SessionAuth(BaseAuth):
     def enforce_csrf(self, request):
         reason = CSRFCheck().process_view(request, None, (), {})
         if reason:
-            raise Forbidden(_('CSRF Failed: {0}').format(reason))
+            raise exceptions.Forbidden(_('CSRF Failed: {0}').format(reason))
 
 
 class BasicHttpAuth(BaseAuth):
@@ -73,16 +73,16 @@ class BasicHttpAuth(BaseAuth):
 
         if len(authdata) == 1:
             msg = _('Invalid basic header. No credentials provided.')
-            raise AuthenticationFailed(msg)
+            raise exceptions.AuthenticationFailed(msg)
         elif len(authdata) > 2:
             msg = _('Invalid basic header. Credentials string should not contain spaces.')
-            raise AuthenticationFailed(msg)
+            raise exceptions.AuthenticationFailed(msg)
 
         try:
             auth_parts = base64.b64decode(authdata[1]).decode(HTTP_HEADER_ENCODING).partition(':')
         except Exception:
             msg = _('Invalid basic header. Credentials not correctly base64 encoded.')
-            raise AuthenticationFailed(msg)
+            raise exceptions.AuthenticationFailed(msg)
 
         userid, password = auth_parts[0], auth_parts[2]
         return self.authenticate_credentials(request, userid, password)
@@ -97,10 +97,10 @@ class BasicHttpAuth(BaseAuth):
         user = auth.authenticate(**credentials)
 
         if user is None:
-            raise AuthenticationFailed(_('Invalid username/password.'))
+            raise exceptions.AuthenticationFailed(_('Invalid username/password.'))
 
         if not user.is_active:
-            raise AuthenticationFailed(_('User inactive or deleted.'))
+            raise exceptions.AuthenticationFailed(_('User inactive or deleted.'))
 
         return user
 
@@ -117,10 +117,10 @@ class TokenAuth(BaseAuth):
 
         if len(authdata) == 1:
             msg = _('Invalid token header. No credentials provided.')
-            raise AuthenticationFailed(msg)
+            raise exceptions.AuthenticationFailed(msg)
         elif len(authdata) > 2:
             msg = _('Invalid token header. Token string should not contain spaces.')
-            raise AuthenticationFailed(msg)
+            raise exceptions.AuthenticationFailed(msg)
 
         return self.authenticate_credentials(request, authdata[1])
 
@@ -137,13 +137,13 @@ class TokenAuth(BaseAuth):
         try:
             return User.objects.get(api_token__key=key)
         except User.DoesNotExist:
-            raise AuthenticationFailed(_('Invalid token.'))
+            raise exceptions.AuthenticationFailed(_('Invalid token.'))
 
     def authenticate_credentials(self, request, key):
         user = self.lookup_user(request, key)
 
         if not user.is_active:
-            raise AuthenticationFailed(_('User inactive or deleted.'))
+            raise exceptions.AuthenticationFailed(_('User inactive or deleted.'))
 
         return user
 

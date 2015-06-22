@@ -2,8 +2,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.forms.models import modelform_factory
 from django.utils.translation import ugettext as _
 
-from . import http, mixins
-from .exceptions import HttpError, NotFound, FormValidationError
+from . import exceptions, http, mixins
 from .utils import serialize
 from .views import Endpoint
 
@@ -46,9 +45,12 @@ class GenericEndpoint(Endpoint):
                 self.__class__.__name__))
 
         try:
-            return queryset.get(**lookup)
+            obj = queryset.get(**lookup)
         except self.model.DoesNotExist:
-            raise NotFound(_('Resource not found'))
+            raise exceptions.NotFound(_('Resource not found'))
+
+        self.check_object_permissions(self.request, obj)
+        return obj
 
     def get_form_class(self):
         if self.form_class is not None:
@@ -69,7 +71,7 @@ class GenericEndpoint(Endpoint):
         return {'data': self.serialize(self.object)}
 
     def form_invalid(self, form):
-        raise FormValidationError(form=form)
+        raise exceptions.ValidationError(form=form)
 
     def serialize(self, objs):
         return serialize(objs, fields=self.fields)
