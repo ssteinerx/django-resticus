@@ -3,10 +3,10 @@ import traceback
 
 from django import http
 from django.conf import settings
-from django.core.serializers.json import DjangoJSONEncoder
 from django.utils.translation import ugettext as _
 
 from .compat import json
+from .utils import JSONEncoder
 
 __all__ = ['JSONResponse', 'JSONErrorResponse', 'Http200', 'Http201',
     'Http204', 'Http400', 'Http401', 'Http403', 'Http404', 'Http405',
@@ -18,7 +18,7 @@ HTTP_HEADER_ENCODING = 'iso-8859-1'
 class JSONResponse(http.HttpResponse):
     """An HTTP response class that consumes data to be serialized to JSON."""
 
-    def __init__(self, data, encoder=DjangoJSONEncoder, **kwargs):
+    def __init__(self, data, encoder=JSONEncoder, **kwargs):
         kwargs.setdefault('content_type', 'application/json')
         data = json.dumps(data, cls=encoder)
         super(JSONResponse, self).__init__(content=data, **kwargs)
