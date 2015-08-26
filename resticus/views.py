@@ -166,26 +166,34 @@ class Endpoint(View):
             response = super(Endpoint, self).dispatch(request, *args, **kwargs)
 
         except exceptions.AuthenticationFailed as err:
-            # WWW-Authenticate header for 401 responses, else coerce to 403
-            auth_header = self.get_authenticate_header(self.request)
-            if auth_header:
-                err.response['WWW-Authenticate'] = auth_header
-            else:
-                err.response.status_code = 403
-            response = err.response
+            response = self.authentication_failed(err)
 
         except exceptions.APIException as err:
-            response = err.response
+            response = self.api_exception(err)
 
         except Exception as err:
-            if settings.DEBUG:
-                response = http.Http500(str(err))
-            else:
-                response = http.Http500(_('Internal server error.'))
+            response = self.server_error(err)
 
         if not isinstance(response, HttpResponse):
             response = http.Http200(response)
         return response
+
+    def authentication_failed(self, err):
+        # WWW-Authenticate header for 401 responses, else coerce to 403
+        auth_header = self.get_authenticate_header(self.request)
+        if auth_header:
+            err.response['WWW-Authenticate'] = auth_header
+        else:
+            err.response.status_code = 403
+        return err.response
+
+    def server_error(self, err):
+        if settings.DEBUG:
+            return http.Http500(str(err))
+        return http.Http500(_('Internal server error.'))
+
+    def api_exception(self, err):
+        return err.response
 
 
 class SessionAuthEndpoint(Endpoint):
