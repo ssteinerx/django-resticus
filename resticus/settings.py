@@ -14,13 +14,24 @@ DEFAULTS = {
     'DEFAULT_PERMISSION_CLASSES': (
         'resticus.permissions.AllowAny',
     ),
+    'JSON_DECODER': 'resticus.encoders.JSONDecoder',
+    'JSON_ENCODER': 'resticus.encoders.JSONEncoder',
     'LOGIN_REQUIRED': False,
     'TOKEN_MODEL': None,
 }
 
+try:
+    import rapidjson
+    DEFAULTS['JSON_DECODER'] = 'resticus.encoders.RapidJSONDecoder'
+    DEFAULTS['JSON_ENCODER'] = 'resticus.encoders.RapidJSONEncoder'
+except ImportError:
+    pass
+
 IMPORT_STRINGS = (
     'DEFAULT_AUTHENTICATION_CLASSES',
     'DEFAULT_PERMISSION_CLASSES',
+    'JSON_DECODER',
+    'JSON_ENCODER',
 )
 
 

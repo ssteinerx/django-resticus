@@ -5,8 +5,7 @@ from django import http
 from django.conf import settings
 from django.utils.translation import ugettext as _
 
-from .compat import json
-from .utils import JSONEncoder
+from .settings import api_settings
 
 __all__ = ['JSONResponse', 'JSONErrorResponse', 'Http200', 'Http201',
     'Http204', 'Http400', 'Http401', 'Http403', 'Http404', 'Http405',
@@ -18,9 +17,9 @@ HTTP_HEADER_ENCODING = 'iso-8859-1'
 class JSONResponse(http.HttpResponse):
     """An HTTP response class that consumes data to be serialized to JSON."""
 
-    def __init__(self, data, encoder=JSONEncoder, **kwargs):
+    def __init__(self, data, **kwargs):
         kwargs.setdefault('content_type', 'application/json')
-        data = json.dumps(data, cls=encoder)
+        data = api_settings.JSON_ENCODER().encode(data).encode('utf-8')
         super(JSONResponse, self).__init__(content=data, **kwargs)
 
 

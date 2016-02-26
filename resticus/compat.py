@@ -13,11 +13,11 @@ except ImportError:
 
 
 try:
-    # Optional support for rapidjson
-    import rapidjson as json
-except ImportError:
     # json module from python > 2.6
     import json
+except ImportError:
+    # use packaged django version of simplejson
+    from django.utils import simplejson as json
 
 
 # Support custom user models in Django 1.5+

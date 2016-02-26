@@ -10,7 +10,7 @@ from django.views.generic import View
 
 from . import exceptions, http
 from .auth import SessionAuth, TokenAuth
-from .compat import get_user_model, json
+from .compat import get_user_model
 from .settings import api_settings
 from .utils import serialize
 
@@ -78,7 +78,7 @@ class Endpoint(View):
             charset = ct_params.get('charset', 'utf-8')
             try:
                 data = request.body.decode(charset)
-                return json.loads(data)
+                return api_settings.JSON_DECODER().decode(data)
             except Exception as err:
                 raise exceptions.ParseError()
         elif ((ct == 'application/x-www-form-urlencoded') or

@@ -1,9 +1,7 @@
 import six
 
-from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.encoding import force_text
-from django.utils.functional import Promise
 
 __all__ = ['serialize', 'flatten']
 
@@ -152,10 +150,3 @@ def flatten(attname):
         del data[attname]
         return data
     return fixup
-
-
-class JSONEncoder(DjangoJSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, Promise):
-            return force_text(obj)
-        return super(JSONEncoder, self).default(obj)
