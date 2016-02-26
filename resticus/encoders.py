@@ -25,4 +25,8 @@ class RapidJSONDecoder(object):
 class RapidJSONEncoder(object):
     def encode(self, data):
         import rapidjson
-        return rapidjson.dumps(data, use_decimal=True, datetime_mode=True)
+        return rapidjson.dumps(data, default=self.default, use_decimal=True, datetime_mode=True)
+
+    def default(self, obj):
+        if isinstance(obj, Promise):
+            return force_text(obj)
