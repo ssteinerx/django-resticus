@@ -227,16 +227,7 @@ class SessionAuthEndpoint(Endpoint):
     get.login_required = True
 
     def post(self, request):
-        username_field = getattr(get_user_model(), 'USERNAME_FIELD', 'username')
-
-        username = request.data.get(username_field,
-            request.data.get('username'))
-        password = request.data.get('password')
-
-        credentials = {
-            username_field: username,
-            'password': password
-        }
+        credentials = self.get_credentials(self.request)
         request.user = auth.authenticate(**credentials)
 
         if request.user is None:
@@ -248,6 +239,17 @@ class SessionAuthEndpoint(Endpoint):
         auth.login(request, request.user)
         return self.get(request)
 
+    def get_credentials(self, request):
+        username_field = getattr(get_user_model(), 'USERNAME_FIELD', 'username')
+
+        username = request.data.get(username_field,
+            request.data.get('username'))
+        password = request.data.get('password')
+
+        return {
+            username_field: username,
+            'password': password
+        }
 
 class TokenAuthEndpoint(Endpoint):
     authentication_classes = (TokenAuth,)
@@ -266,16 +268,7 @@ class TokenAuthEndpoint(Endpoint):
     get.login_required = True
 
     def post(self, request):
-        username_field = getattr(get_user_model(), 'USERNAME_FIELD', 'username')
-
-        username = request.data.get(username_field,
-            request.data.get('username'))
-        password = request.data.get('password')
-
-        credentials = {
-            username_field: username,
-            'password': password
-        }
+        credentials = self.get_credentials(request)
         request.user = auth.authenticate(**credentials)
 
         if request.user is None:
@@ -285,6 +278,18 @@ class TokenAuthEndpoint(Endpoint):
             raise exceptions.AuthenticationFailed(_('User inactive or deleted.'))
 
         return self.get(request)
+
+    def get_credentials(self, request):
+        username_field = getattr(get_user_model(), 'USERNAME_FIELD', 'username')
+
+        username = request.data.get(username_field,
+            request.data.get('username'))
+        password = request.data.get('password')
+
+        return {
+            username_field: username,
+            'password': password
+        }
 
     def get_token(self, request):
         TokenModel = TokenAuth.get_token_model()
