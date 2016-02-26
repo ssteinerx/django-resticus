@@ -251,6 +251,7 @@ class SessionAuthEndpoint(Endpoint):
             'password': password
         }
 
+
 class TokenAuthEndpoint(Endpoint):
     authentication_classes = (TokenAuth,)
 
