@@ -11,6 +11,7 @@ class JSONDecoder(json.JSONDecoder):
 
 class JSONEncoder(DjangoJSONEncoder):
     def default(self, obj):
+        # Handle strings marked for translation
         if isinstance(obj, Promise):
             return force_text(obj)
         return super(JSONEncoder, self).default(obj)
@@ -23,10 +24,10 @@ class RapidJSONDecoder(object):
 
 
 class RapidJSONEncoder(object):
+    def __init__(self):
+        self._encoder = JSONEncoder()
+
     def encode(self, data):
         import rapidjson
-        return rapidjson.dumps(data, default=self.default, use_decimal=True, datetime_mode=True)
-
-    def default(self, obj):
-        if isinstance(obj, Promise):
-            return force_text(obj)
+        return rapidjson.dumps(data, default=self._encoder.default,
+            use_decimal=True, datetime_mode=True)
