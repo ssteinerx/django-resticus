@@ -26,6 +26,10 @@ setup(
         "Programming Language :: Python :: 3",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
-    packages=find_packages(),
-    install_requires=['Django>=1.6', 'six>=1.3.0'],
+    packages=find_packages(exclude=['tests', 'tests.*']),
+    install_requires=[
+        'Django>=1.6',
+        'django-filter>=0.12.0',
+        'six>=1.3.0'
+    ],
 )

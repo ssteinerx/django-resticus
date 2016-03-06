@@ -2,6 +2,8 @@ from django.core.exceptions import ImproperlyConfigured
 from django.forms.models import modelform_factory
 from django.utils.translation import ugettext as _
 
+from django_filters.filterset import filterset_factory
+
 from . import exceptions, http, mixins
 from .utils import serialize
 from .views import Endpoint
@@ -18,6 +20,7 @@ class GenericEndpoint(Endpoint):
     lookup_field = 'pk'
     lookup_url_kwarg = None
 
+    filter_class = None
     form_class = None
     queryset = None
 
@@ -52,15 +55,19 @@ class GenericEndpoint(Endpoint):
         self.check_object_permissions(self.request, obj)
         return obj
 
+    def get_filter_class(self):
+        if self.filter_class is not None:
+            return self.filter_class
+        return filterset_factory(self.model)
+
+    def get_filter(self):
+        FilterClass = self.get_filter_class()
+        return FilterClass(self.request.GET, queryset=self.get_queryset())
+
     def get_form_class(self):
         if self.form_class is not None:
             return self.form_class
-
         return modelform_factory(self.model, fields=self.fields or '__all__')
-
-        msg = _('{0} must either define "form_class" or both "model" and '
-            '"fields", or override "get_form_class()"')
-        raise ImproperlyConfigured(msg.format(self.__class__.__name__))
 
     def get_form(self, data=None, files=None, **kwargs):
         FormClass = self.get_form_class()

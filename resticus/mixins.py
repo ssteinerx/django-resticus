@@ -6,8 +6,8 @@ __all__ = ['ListModelMixin', 'DetailModelMixin', 'CreateModelMixin',
 
 class ListModelMixin(object):
     def get(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        return {'data': [self.serialize(obj) for obj in queryset]}
+        filter = self.get_filter()
+        return {'data': [self.serialize(obj) for obj in filter]}
 
 
 class DetailModelMixin(object):
