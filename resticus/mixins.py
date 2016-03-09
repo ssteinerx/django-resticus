@@ -46,7 +46,24 @@ class UpdateModelMixin(object):
             return self.form_valid(form)
         return self.form_invalid(form)
 
-    # TODO: patch
+    def patch(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        form = self.get_form(
+            data=request.data,
+            files=request.FILES,
+            instance=self.object
+        )
+        form = self.patch_form(form)
+        if form.is_valid():
+            return self.form_valid(form)
+        return self.form_invalid(form)
+
+    def patch_form(self, form):
+        if form.is_bound:
+            for field in list(form.fields.keys()):
+                if field not in form.data:
+                    form.fields.pop(field)
+        return form
 
 
 class DeleteModelMixin(object):
