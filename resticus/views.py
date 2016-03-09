@@ -62,7 +62,7 @@ class Endpoint(View):
             ct, params = content_type.split(';', 1)
             try:
                 params = dict(param.split('=') for param in params.split())
-            except:
+            except Exception:
                 params = {}
         else:
             ct = content_type
