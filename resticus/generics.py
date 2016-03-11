@@ -107,6 +107,7 @@ class DetailEndpoint(
 
 class UpdateEndpoint(
     mixins.UpdateModelMixin,
+    mixins.PatchModelMixin,
     GenericEndpoint
 ):
     pass
@@ -130,6 +131,7 @@ class ListCreateEndpoint(
 class DetailUpdateEndpoint(
     mixins.DetailModelMixin,
     mixins.UpdateModelMixin,
+    mixins.PatchModelMixin,
     GenericEndpoint
 ):
     pass
@@ -146,6 +148,7 @@ class DetailDeleteEndpoint(
 class DetailUpdateDeleteEndpoint(
     mixins.DetailModelMixin,
     mixins.UpdateModelMixin,
+    mixins.PatchModelMixin,
     mixins.DeleteModelMixin,
     GenericEndpoint
 ):
