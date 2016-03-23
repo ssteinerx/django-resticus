@@ -150,3 +150,11 @@ def flatten(attname):
         del data[attname]
         return data
     return fixup
+
+
+def patch_form(form):
+    if form.is_bound:
+        for field in list(form.fields.keys()):
+            if field not in form.data:
+                form.fields.pop(field)
+    return form
