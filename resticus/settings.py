@@ -22,6 +22,7 @@ DEFAULTS = {
         'application/json': 'resticus.parsers.parse_json',
         'application/x-www-form-urlencoded': 'resticus.parsers.parse_post',
         'multipart/form-data': 'resticus.parsers.parse_post',
+        'text/plain': 'resticus.parsers.parse_plain_text'
     }
 }
 

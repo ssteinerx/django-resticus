@@ -27,3 +27,7 @@ def parse_json(request, **extra):
 
 def parse_post(request, **extra):
     return dict(request.POST.items())
+
+
+def parse_plain_text(request, **extra):
+    return request.body
