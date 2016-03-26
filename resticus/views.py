@@ -11,6 +11,7 @@ from django.views.generic import View
 from . import exceptions, http
 from .auth import SessionAuth, TokenAuth
 from .compat import get_user_model
+from .parsers import parse_content_type
 from .settings import api_settings
 from .utils import serialize
 
@@ -55,36 +56,20 @@ class Endpoint(View):
     authentication_classes = api_settings.DEFAULT_AUTHENTICATION_CLASSES
     login_required = api_settings.LOGIN_REQUIRED
     permission_classes = api_settings.DEFAULT_PERMISSION_CLASSES
-
-    @staticmethod
-    def parse_content_type(content_type):
-        if ';' in content_type:
-            ct, params = content_type.split(';', 1)
-            try:
-                params = dict(param.split('=') for param in params.split())
-            except Exception:
-                params = {}
-        else:
-            ct = content_type
-            params = {}
-        return ct, params
+    data_parsers = api_settings.DATA_PARSERS
 
     def parse_body(self, request):
         if request.method not in ['POST', 'PUT', 'PATCH']:
             return
 
-        ct, ct_params = self.parse_content_type(request.content_type)
-        if ct == 'application/json':
-            charset = ct_params.get('charset', 'utf-8')
-            try:
-                data = request.body.decode(charset)
-                return api_settings.JSON_DECODER().decode(data)
-            except Exception as err:
-                raise exceptions.ParseError()
-        elif ((ct == 'application/x-www-form-urlencoded') or
-                (ct.startswith('multipart/form-data'))):
-            return dict((k, v) for (k, v) in request.POST.items())
-        return request.body
+        content_type, params = parse_content_type(request.content_type)
+
+        try:
+            parser = self.data_parsers[content_type]
+        except KeyError:
+            raise exceptions.ParseError()
+
+        return parser(request, **params)
 
     def authenticate(self, request):
         request.authenticator = None

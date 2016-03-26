@@ -18,6 +18,11 @@ DEFAULTS = {
     'JSON_ENCODER': 'resticus.encoders.JSONEncoder',
     'LOGIN_REQUIRED': False,
     'TOKEN_MODEL': None,
+    'DATA_PARSERS': {
+        'application/json': 'resticus.parsers.parse_json',
+        'application/x-www-form-urlencoded': 'resticus.parsers.parse_post',
+        'multipart/form-data': 'resticus.parsers.parse_post',
+    }
 }
 
 try:
@@ -32,6 +37,7 @@ IMPORT_STRINGS = (
     'DEFAULT_PERMISSION_CLASSES',
     'JSON_DECODER',
     'JSON_ENCODER',
+    'DATA_PARSERS',
 )
 
 
@@ -46,6 +52,8 @@ def perform_import(val, setting_name):
         return import_from_string(val, setting_name)
     elif isinstance(val, (list, tuple)):
         return [import_from_string(item, setting_name) for item in val]
+    elif isinstance(val, dict):
+        return {key: import_from_string(item, setting_name) for key, item in val.items()}
     return val
 
 
