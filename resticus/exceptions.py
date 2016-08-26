@@ -11,8 +11,8 @@ class APIException(Exception):
 
     def __init__(self, reason=None, **additional_data):
         super(APIException, self).__init__()
-        reason = reason or self.default_reason
-        self.response = self.response_class(reason, **additional_data)
+        self.reason = reason or self.default_reason
+        self.response = self.response_class(self.reason, **additional_data)
 
 
 class HttpError(APIException):
