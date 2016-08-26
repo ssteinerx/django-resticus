@@ -14,19 +14,20 @@ __all__ = ['JSONResponse', 'JSONErrorResponse', 'Http200', 'Http201',
 HTTP_HEADER_ENCODING = 'iso-8859-1'
 
 
-class JSONResponse(http.HttpResponse):
+class JSONResponse(http.StreamingHttpResponse):
     """An HTTP response class that consumes data to be serialized to JSON."""
 
     def __init__(self, data, **kwargs):
         kwargs.setdefault('content_type', 'application/json')
-        data = api_settings.JSON_ENCODER().encode(data).encode('utf-8')
-        super(JSONResponse, self).__init__(content=data, **kwargs)
+        data = api_settings.JSON_ENCODER().iterencode(data)
+        super(JSONResponse, self).__init__(streaming_content=data, **kwargs)
 
 
-class JSONErrorResponse(http.HttpResponseServerError, JSONResponse):
+class JSONErrorResponse(JSONResponse):
     """A JSON response class for simple API errors."""
 
     default_reason = None
+    status_code = 500
 
     def __init__(self, reason=None, **kwargs):
         data = {'errors': [{'detail': reason or self.default_reason}]}
@@ -55,8 +56,9 @@ class Http204(http.HttpResponse):
     status_code = 204
 
 
-class Http400(http.HttpResponseBadRequest, JSONResponse):
+class Http400(JSONErrorResponse):
     """HTTP 400 Bad Request"""
+    status_code = 400
 
     def __init__(self, reason, details=None, **kwargs):
         data = {'errors': [{'detail': reason}]}
@@ -70,24 +72,26 @@ class Http401(JSONErrorResponse):
     status_code = 401
 
 
-class Http403(http.HttpResponseForbidden, JSONErrorResponse):
+class Http403(JSONErrorResponse):
     """HTTP 403 Forbidden"""
-    pass
+    status_code = 403
 
 
-class Http404(http.HttpResponseNotFound, JSONErrorResponse):
+class Http404(JSONErrorResponse):
     """HTTP 404 Not Found"""
-    pass
+    status_code = 404
 
 
-class Http405(http.HttpResponseNotAllowed, JSONResponse):
+class Http405(JSONResponse):
     """HTTP 405 Method Not Allowed"""
+    status_code= 405
 
     def __init__(self, method, permitted_methods, *args, **kwargs):
         data = {'errors': [{
             'detail': _('Method "{0}" not allowed').format(method),
         }]}
-        super(Http405, self).__init__(permitted_methods, data=data, *args, **kwargs)
+        super(Http405, self).__init__(data=data, *args, **kwargs)
+        self['Allow'] = ', '.join(permitted_methods)
 
 
 class Http409(JSONErrorResponse):

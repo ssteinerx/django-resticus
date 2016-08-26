@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.core.urlresolvers import reverse
+from django.http import StreamingHttpResponse
 from django.test.client import Client, MULTIPART_CONTENT
 from django.test.utils import override_settings
 from resticus.compat import json
@@ -12,15 +13,22 @@ def debug(fn):
 class TestClient(Client):
     @staticmethod
     def process(response):
+        if isinstance(response, StreamingHttpResponse):
+            content = response.getvalue()
+        else:
+            content = response.content
+
         try:
-            response.json = json.loads(response.content.decode('utf-8'))
+            response.json = json.loads(content.decode('utf-8'))
         except Exception:
             response.json = None
+
         if response.status_code == 500 and settings.DEBUG:
             try:
                 print(response.json['errors'][0]['meta']['traceback'])
             except Exception:
                 print(response.content)
+
         return response
 
     def get(self, url_name, data={}, follow=False, extra={}, *args, **kwargs):

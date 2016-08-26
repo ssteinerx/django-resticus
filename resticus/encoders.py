@@ -1,3 +1,5 @@
+import warnings
+
 from django.core.serializers.json import DjangoJSONEncoder
 from django.utils.encoding import force_text
 from django.utils.functional import Promise
@@ -31,3 +33,7 @@ class RapidJSONEncoder(object):
         import rapidjson
         return rapidjson.dumps(data, default=self._encoder.default,
             use_decimal=True, datetime_mode=True)
+
+    def iterencode(self, data):
+        warnings.warn('iterencode is not available in rapidjson, defaulting to json.')
+        return self._encoder.iterencode(data)
