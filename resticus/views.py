@@ -2,7 +2,7 @@ from django.conf import settings
 from django.contrib import auth
 from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import PermissionDenied
-from django.http import HttpResponse
+from django.http import HttpResponse, StreamingHttpResponse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 from django.views.decorators.csrf import csrf_exempt
@@ -159,7 +159,7 @@ class Endpoint(View):
         except Exception as err:
             response = self.server_error(err)
 
-        if not isinstance(response, HttpResponse):
+        if not isinstance(response, (HttpResponse, StreamingHttpResponse)):
             response = http.Http200(response)
         return response
 
