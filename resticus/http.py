@@ -84,7 +84,7 @@ class Http404(JSONErrorResponse):
 
 class Http405(JSONResponse):
     """HTTP 405 Method Not Allowed"""
-    status_code= 405
+    status_code = 405
 
     def __init__(self, method, permitted_methods, *args, **kwargs):
         data = {'errors': [{
