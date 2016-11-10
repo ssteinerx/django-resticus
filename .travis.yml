@@ -2,7 +2,7 @@ language: python
 
 env:
 
-  - TOXENV=py27
+  - TOXENV=py27-1.10
 #  - TOXENV=django18_py34
 
 #  - TOXENV=django19_py27
