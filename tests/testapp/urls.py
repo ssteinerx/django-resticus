@@ -1,9 +1,9 @@
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 from resticus.views import SessionAuthEndpoint, TokenAuthEndpoint
 
 from .views import *
 
-urlpatterns = patterns('',
+urlpatterns = [
     url(r'^auth/$', SessionAuthEndpoint.as_view(),
         name='session_auth'),
     url(r'^auth/basic/$', BasicAuthEndpoint.as_view(),
@@ -33,4 +33,4 @@ urlpatterns = patterns('',
     url(r'^error-raising-view/$', ErrorRaisingView.as_view(),
         name='error_raising_view'),
     url(r'^.*$', WildcardHandler.as_view()),
-)
+]
