@@ -24,7 +24,9 @@ class TestSerialization(TestCase):
         """Test simple serialization, all fields, without recursing"""
 
         s = serialize(self.author)
-        self.assertEqual(s, {'name': 'User Foo', 'id': self.author.id})
+        self.assertEqual(s, {'name': 'User Foo',
+                             'comment':'No comment yet!',
+                             'id': self.author.id})
 
     def test_partial_shallow(self):
         """Test serialization of only selected fields"""
@@ -102,8 +104,8 @@ class TestSerialization(TestCase):
 
         self.assertEqual(s,
             [
-                {'name': a1.name, 'id': a1.id},
-                {'name': a2.name, 'id': a2.id},
+                {'name': a1.name, 'id': a1.id, 'comment': 'No comment yet!'},
+                {'name': a2.name, 'id': a2.id, 'comment': 'No comment yet!'},
             ]
         )
 
@@ -116,8 +118,8 @@ class TestSerialization(TestCase):
         s = serialize(list(Author.objects.all()))
         self.assertEqual(s,
             [
-                {'name': a1.name, 'id': a1.id},
-                {'name': a2.name, 'id': a2.id},
+                {'name': a1.name, 'id': a1.id, 'comment': 'No comment yet!'},
+                {'name': a2.name, 'id': a2.id, 'comment': 'No comment yet!'},
             ]
         )
 
@@ -146,8 +148,8 @@ class TestSerialization(TestCase):
         self.assertTrue(isinstance(s, list))
         # Must cast back to set to ignore ordering
         self.assertEqual(sorted(s, key=lambda el: el['name']), [
-            {'name': a1.name, 'id': a1.id},
-            {'name': a2.name, 'id': a2.id},
+            {'name': a1.name, 'id': a1.id, 'comment': 'No comment yet!'},
+            {'name': a2.name, 'id': a2.id, 'comment': 'No comment yet!'},
         ])
 
     def test_passthrough(self):

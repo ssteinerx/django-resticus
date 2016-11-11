@@ -10,9 +10,22 @@ from resticus.views import Endpoint
 from .models import *
 from .forms import *
 
-__all__ = ['AuthorList', 'AuthorDetail', 'PublisherList', 'PublisherDetail',
-    'ReadOnlyPublisherList', 'BookDetail', 'FailsIntentionally',
-    'WildcardHandler', 'EchoView', 'ErrorRaisingView', 'BasicAuthEndpoint']
+__all__ =  [
+            'AuthorList',
+            'AuthorDetail',
+            'BookDetail',
+            'PublisherList',
+            'PublisherDetail',
+            'ReadOnlyPublisherList',
+           ]
+
+__all__ += [
+            'BasicAuthEndpoint'
+            'EchoView',
+            'ErrorRaisingView',
+            'FailsIntentionally',
+            'WildcardHandler',
+          ]
 
 
 class AuthorList(generics.ListCreateEndpoint):

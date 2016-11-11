@@ -1,7 +1,22 @@
 from django.conf.urls import url
 from resticus.views import SessionAuthEndpoint, TokenAuthEndpoint
 
-from .views import *
+from .views import (
+                        AuthorList,
+                        AuthorDetail,
+                        BookDetail,
+                        BasicAuthEndpoint,
+                        PublisherDetail,
+                        PublisherList,
+                        ReadOnlyPublisherList,
+                   )
+
+from .views import (
+                        FailsIntentionally,
+                        EchoView,
+                        ErrorRaisingView,
+                        WildcardHandler,
+                   )
 
 urlpatterns = [
     url(r'^auth/$', SessionAuthEndpoint.as_view(),

@@ -57,7 +57,8 @@ class TestEndpoint(TestCase):
         """Exercise multipart/form-data POST"""
 
         r = self.client.post('author_list',
-                             data={"name": "New User"})  # multipart/form-data is default in test client
+                             data={"name": "New User"},
+                             content_type='multipart/form-data')
         self.assertEqual(r.status_code, 201)
         self.assertEqual(r.json['data']['name'], 'New User')
         self.assertEqual(r.json['data']['name'],
@@ -83,7 +84,6 @@ class TestEndpoint(TestCase):
 
     def test_delete_author(self):
         """Exercise DELETE request"""
-
         r = self.client.delete('author_detail', author_id=self.author.id)
         self.assertEqual(r.status_code, 204)
         self.assertEqual(Author.objects.count(), 0)

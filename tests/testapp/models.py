@@ -7,8 +7,11 @@ class Publisher(models.Model):
     name = models.CharField(max_length=255)
 
 
+
 class Author(models.Model):
     name = models.CharField(max_length=255)
+    comment = models.CharField(max_length=255, default="No comment yet!")
+
 
 
 class Book(models.Model):
