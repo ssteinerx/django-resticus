@@ -56,9 +56,8 @@ class TestEndpoint(TestCase):
     def test_create_author_multipart(self):
         """Exercise multipart/form-data POST"""
 
-        r = self.client.post('author_list', data={
-            'name': 'New User',
-        })  # multipart/form-data is default in test client
+        r = self.client.post('author_list',
+                             data={"name": "New User"})  # multipart/form-data is default in test client
         self.assertEqual(r.status_code, 201)
         self.assertEqual(r.json['data']['name'], 'New User')
         self.assertEqual(r.json['data']['name'],

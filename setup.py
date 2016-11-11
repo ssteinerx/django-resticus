@@ -10,12 +10,12 @@ except ImportError:
 
 setup(
     name='django-resticus',
-    version='0.0.10',
-    author='Derek Payton',
+    version='0.1.0',
+    author='Steve Steiner from Derek Payton',
     author_email='derek.payton@gmail.com',
     description='A RESTful framework for Django',
     license='MIT',
-    url='https://github.com/dmpayton/django-resticus',
+    url='https://github.com/ssteinerx/django-resticus',
     classifiers=[
         "Development Status :: 4 - Beta",
         "Environment :: Web Environment",

@@ -17,6 +17,7 @@ from .utils import serialize
 
 __all__ = ['Endpoint', 'SessionAuthEndpoint', 'TokenAuthEndpoint']
 
+from pprint import pprint as pp
 
 class Endpoint(View):
     """
@@ -212,8 +213,15 @@ class SessionAuthEndpoint(Endpoint):
     get.login_required = True
 
     def post(self, request):
-        credentials = self.get_credentials(self.request)
+        # Fix:  November 9, 2016 -- was using self.request which
+        #       must've been set somehow, but started failing under
+        #       Django 1.10
+        print("request = ", request)
+        credentials = self.get_credentials(request)
+        print("credentials: ", credentials)
         request.user = auth.authenticate(**credentials)
+        print("request.user: ", request.user)
+        # raise PermissionDenied("not really")
 
         if request.user is None:
             raise exceptions.AuthenticationFailed(_('Invalid username/password.'))
@@ -226,17 +234,23 @@ class SessionAuthEndpoint(Endpoint):
 
     def get_credentials(self, request):
         username_field = getattr(get_user_model(), 'USERNAME_FIELD', 'username')
-
+        print('username_field', username_field)
+        print("RQ, RQ-DATA")
+        pp(request)
+        # pp(dir(request))
+        pp(request.data)
+        print("RQ, RQ-DATA END")
         username = request.data.get(username_field,
             request.data.get('username'))
+        print('username', username)
         password = request.data.get('password')
-
+        print('password', password)
         return {
             username_field: username,
             'password': password
         }
 
-
+# TBD: this is almost identical in post() to the above, other refactoring, too
 class TokenAuthEndpoint(Endpoint):
     authentication_classes = (TokenAuth,)
 
